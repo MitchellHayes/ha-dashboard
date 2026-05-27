@@ -37,6 +37,7 @@ export function useCalendarEvents(entityId: string) {
     }
   }, [callService, entityId]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     void fetchEvents();
   }, [entityState, fetchEvents]);

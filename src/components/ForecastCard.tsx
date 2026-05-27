@@ -69,7 +69,7 @@ export function ForecastCard() {
             <span>
               <WeatherIcon condition={d.condition} size={20} />
             </span>
-            <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.05)', position: 'relative' }}>
+            <div style={{ height: 4, borderRadius: 2, background: 'var(--track)', position: 'relative' }}>
               <div
                 style={{
                   position: 'absolute',

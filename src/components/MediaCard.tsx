@@ -58,7 +58,7 @@ export function MediaCard() {
           </span>
           <span style={{ fontSize: 14, color: 'var(--text-2)', marginTop: 2 }}>{artist || ' '}</span>
           {/* Progress bar */}
-          <div style={{ marginTop: 8, height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, position: 'relative' }}>
+          <div style={{ marginTop: 8, height: 3, background: 'var(--track)', borderRadius: 2, position: 'relative' }}>
             <div
               style={{
                 position: 'absolute',

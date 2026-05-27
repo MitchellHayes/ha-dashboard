@@ -1,35 +1,44 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --bg-deep: #07090d;
-  --bg: #0a0d13;
-  --card: #131822;
-  --card-2: #1a212e;
-  --border: rgba(255,255,255,0.06);
-  --border-2: rgba(255,255,255,0.10);
-  --text: #ecedf0;
-  --text-2: #8a91a0;
-  --text-3: #555c6b;
-  --text-4: #353b47;
-  --accent: #f5a623;
-  --accent-2: #ffc870;
+  /* Glare-Lift — lifted blacks so glass stops acting like a mirror */
+  --bg-deep: #1b212d;
+  --bg: #1f2632;
+  --card: #2a3140;
+  --card-2: #333b4d;
+
+  --border: rgba(255,255,255,0.10);
+  --border-2: rgba(255,255,255,0.20);
+
+  --text: #ffffff;
+  --text-2: #d2d6df;
+  --text-3: #9ea5b1;   /* 5.3:1 on --card — passes AA */
+  --text-4: #7e8694;   /* 3.6:1 graphical */
+
+  --accent: #ffbf47;
+  --accent-2: #ffd57a;
   --accent-deep: #c47d10;
-  --accent-dim: rgba(245,166,35,0.14);
+  --accent-dim: rgba(255,191,71,0.18);
+
   --ok: #6bbf75;
   --info: #5a9bff;
   --alert: #e85d4f;
   --warm: #ffb45c;
   --cool: #5a9bff;
+
   --radius: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
   --font: 'Geist', ui-sans-serif, -apple-system, system-ui, sans-serif;
   --mono: 'Geist Mono', ui-monospace, monospace;
-  /* Display font sizes — scale with viewport width, clamped for readability */
+
   --sz-clock: clamp(54px, 4.6vw, 88px);
   --sz-weather-temp: clamp(39px, 3.3vw, 64px);
   --sz-room-temp: clamp(37px, 3.1vw, 60px);
   --sz-timer: clamp(28px, 2.4vw, 46px);
+
+  /* Track color for progress bars / timer ring back — ≥3:1 on --card */
+  --track: rgba(255,255,255,0.16);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,13 +47,13 @@
 html, body, #root {
   width: 100%; height: 100%;
   background: #000;
-  color: var(--text);
   font-family: var(--font);
   font-size: 16px;
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
   user-select: none;
+  /* color intentionally omitted — set on .pulse-screen so [data-theme] overrides resolve */
 }
 
 .mono { font-family: var(--mono); font-feature-settings: 'tnum' 1, 'ss01' 1; }
@@ -53,10 +62,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* Stage */
 .pulse-stage {
   position: fixed; inset: 0;
-  background: #000;
+  background: #11151c; /* matches Glare-Lift lifted blacks */
 }
 .pulse-screen {
   width: 100%; height: 100%;
+  color: var(--text); /* here so [data-theme] overrides re-resolve this */
   background:
     radial-gradient(1200px 600px at 30% -10%, rgba(245,166,35,0.05), transparent 60%),
     radial-gradient(900px 500px at 90% 110%, rgba(90,155,255,0.04), transparent 60%),
@@ -184,3 +194,91 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .between { display: flex; align-items: center; justify-content: space-between; }
 .label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); }
 button:focus-visible, .room:focus-visible, .lt:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ─── Daylight (light) — paper-toned, overpowers reflections ─────────────── */
+.pulse-screen[data-theme="light"] {
+  --bg-deep: #ece6d6;
+  --bg: #f2ecdd;
+  --card: #ffffff;
+  --card-2: #f4f0e3;
+
+  --border: rgba(20,16,8,0.14);
+  --border-2: rgba(20,16,8,0.32);
+
+  --text: #141108;
+  --text-2: #46402f;
+  --text-3: #6b6557;   /* 5.8:1 AA */
+  --text-4: #918878;   /* 3.5:1 graphical */
+
+  --accent: #9b5b04;   /* 5.4:1 on white */
+  --accent-2: #7a4500;
+  --accent-deep: #5d3700;
+  --accent-dim: rgba(155,91,4,0.16);
+  --ok: #25762f;
+  --info: #1f56a8;
+  --alert: #b6362a;
+  --warm: #9b5b04;
+  --cool: #1f56a8;
+
+  --track: rgba(20,16,8,0.30); /* 3:1 on white */
+}
+
+.pulse-screen[data-theme="light"] {
+  background:
+    radial-gradient(1200px 600px at 30% -10%, rgba(155,91,4,0.07), transparent 60%),
+    radial-gradient(900px 500px at 90% 110%, rgba(31,86,168,0.05), transparent 60%),
+    linear-gradient(180deg, #f4eedc 0%, #ebe4d2 100%);
+}
+/* Kill film-grain — looks like dirt on cream */
+.pulse-screen[data-theme="light"]::after { opacity: 0; }
+
+/* Stage frame behind screen */
+.pulse-stage:has(.pulse-screen[data-theme="light"]) { background: #d8d0bd; }
+
+/* Cards: subtle shadow instead of white-rgba border */
+.pulse-screen[data-theme="light"] .card,
+.pulse-screen[data-theme="light"] .room {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.7) inset,
+    0 1px 2px rgba(80,50,10,0.04),
+    0 8px 18px rgba(80,50,10,0.05);
+}
+.pulse-screen[data-theme="light"] .room { background: #ffffff; }
+.pulse-screen[data-theme="light"] .lt { background: #f7f3e8; }
+.pulse-screen[data-theme="light"] .lt.on {
+  background: linear-gradient(135deg, rgba(155,91,4,0.16), rgba(155,91,4,0.06));
+  border-color: rgba(155,91,4,0.45);
+}
+.pulse-screen[data-theme="light"] .room.occupied { border-color: rgba(155,91,4,0.40); }
+.pulse-screen[data-theme="light"] .room.occupied::before {
+  background: radial-gradient(800px 200px at 0% 0%, rgba(155,91,4,0.06), transparent 50%);
+}
+
+/* Switch off-state: 3:1 against white card */
+.pulse-screen[data-theme="light"] .switch { background: #8a8273; }
+.pulse-screen[data-theme="light"] .switch::after {
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.08);
+}
+.pulse-screen[data-theme="light"] .switch.on::after { background: #ffffff; }
+
+/* Buttons, pills */
+.pulse-screen[data-theme="light"] .ibtn { background: rgba(20,16,8,0.06); }
+.pulse-screen[data-theme="light"] .ibtn:hover { background: rgba(20,16,8,0.12); }
+.pulse-screen[data-theme="light"] .pill { background: rgba(20,16,8,0.06); color: var(--text-2); }
+
+/* Slider */
+.pulse-screen[data-theme="light"] .slider::-webkit-slider-thumb,
+.pulse-screen[data-theme="light"] .slider::-moz-range-thumb {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.15);
+}
+.pulse-screen[data-theme="light"] .slider::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, var(--accent) var(--p, 50%), #8a8273 var(--p, 50%));
+}
+.pulse-screen[data-theme="light"] .slider::-moz-range-track {
+  background: linear-gradient(to right, var(--accent) var(--p, 50%), #8a8273 var(--p, 50%));
+}
+
+/* Status dot off-state */
+.pulse-screen[data-theme="light"] .dot { background: #b8b1a2; }

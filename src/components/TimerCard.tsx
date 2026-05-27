@@ -28,6 +28,7 @@ export function TimerCard() {
   // Tick every second when running
   useEffect(() => {
     if (!isRunning) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplay(getRemainingSeconds(finishesAt));
       return;
     }
@@ -82,7 +83,7 @@ export function TimerCard() {
         {/* Progress ring */}
         <div style={{ position: 'relative', width: 96, height: 96, flexShrink: 0 }}>
           <svg width='96' height='96' style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx='48' cy='48' r='43' stroke='rgba(255,255,255,0.06)' strokeWidth='5' fill='none' />
+            <circle cx='48' cy='48' r='43' stroke='var(--track)' strokeWidth='5' fill='none' />
             <circle
               cx='48'
               cy='48'

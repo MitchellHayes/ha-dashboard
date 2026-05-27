@@ -35,6 +35,7 @@ export function useTodoItems(entityId: string) {
   }, [callService, entityId]);
 
   // Refetch whenever HA pushes a state change for this todo entity.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     void fetchItems();
   }, [entityState, fetchItems]);

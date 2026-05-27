@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useHass } from '@hakit/core';
 import { NowStrip } from './components/NowStrip';
 import { ForecastCard } from './components/ForecastCard';
 import { TabbedListCard } from './components/TabbedListCard';
@@ -13,26 +14,24 @@ import { AlarmPanel } from './components/AlarmPanel';
 function Dashboard() {
   const [alarmOpen, setAlarmOpen] = useState(false);
 
+  const sunState = useHass(s => (s.entities as Record<string, { state: string }>)['sun.sun']?.state);
+  const theme = sunState === 'above_horizon' ? 'light' : 'hc';
+
   return (
     <div className='pulse-stage'>
-      <div className='pulse-screen'>
+      <div className='pulse-screen' data-theme={theme}>
         <div className='pulse-grid'>
-          {/* Top strip */}
           <NowStrip />
 
-          {/* Main row */}
           <div className='pulse-main'>
-            {/* Left column */}
             <div className='col'>
               <ForecastCard />
               <TabbedListCard />
               <ActivityCard />
             </div>
 
-            {/* Center: house overview */}
             <HouseOverview />
 
-            {/* Right column */}
             <div className='col'>
               <TimerCard />
               <MediaCard />
@@ -40,11 +39,9 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Bottom bar */}
           <QuickActionsBar onAlarmOpen={() => setAlarmOpen(true)} />
         </div>
 
-        {/* Alarm overlay */}
         <AlarmPanel open={alarmOpen} onClose={() => setAlarmOpen(false)} />
       </div>
     </div>

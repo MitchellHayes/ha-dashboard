@@ -4,12 +4,10 @@ import Dashboard from './Dashboard';
 
 function App() {
   return (
-    <>
-      <HassConnect hassUrl={import.meta.env.VITE_HA_URL} hassToken={import.meta.env.VITE_HA_TOKEN}>
-        <ThemeProvider />
-        <Dashboard />
-      </HassConnect>
-    </>
+    <HassConnect hassUrl={import.meta.env.VITE_HA_URL} hassToken={import.meta.env.VITE_HA_TOKEN}>
+      <ThemeProvider />
+      <Dashboard />
+    </HassConnect>
   );
 }
 
