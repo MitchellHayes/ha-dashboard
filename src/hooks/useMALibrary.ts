@@ -1,151 +1,125 @@
 import { useState, useCallback } from 'react';
+import { useHass } from '@hakit/core';
 
-const HA_URL = (import.meta.env.VITE_HA_URL as string).replace(/\/$/, '');
-const HA_TOKEN = import.meta.env.VITE_HA_TOKEN as string;
-
-async function maGet(path: string): Promise<unknown> {
-  const r = await fetch(`${HA_URL}/api/mass${path}`, {
-    headers: { Authorization: `Bearer ${HA_TOKEN}` },
-  });
-  if (!r.ok) throw new Error(`${r.status}`);
-  return r.json();
-}
-
-function resolveUrl(s: string): string {
-  // MA sometimes returns a path-only URL like /api/mass/... — prepend HA origin
-  if (s.startsWith('/')) return `${HA_URL}${s}`;
-  return s;
-}
-
-function parseImage(raw: unknown): string | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const r = raw as Record<string, unknown>;
-  // Direct string
-  if (typeof r.image === 'string' && r.image) return resolveUrl(r.image);
-  // Object: { path, url, thumb, ... }
-  if (r.image && typeof r.image === 'object') {
-    const img = r.image as Record<string, unknown>;
-    for (const key of ['path', 'url', 'thumb', 'large', 'small']) {
-      if (typeof img[key] === 'string' && img[key]) return resolveUrl(img[key] as string);
-    }
-  }
-  // metadata.images array (Spotify SDK shape)
-  const meta = r.metadata as Record<string, unknown> | undefined;
-  if (meta && Array.isArray(meta.images) && meta.images.length > 0) {
-    const first = meta.images[0] as Record<string, unknown>;
-    const u = first.url ?? first.path;
-    if (typeof u === 'string' && u) return resolveUrl(u);
-  }
-  return null;
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyCall = (args: Record<string, unknown>) => Promise<any>;
 
 export interface MAItem {
   item_id: string;
   name: string;
   image: string | null;
-  uri: string;
-  media_type: string;
+  uri: string; // media_content_id — pass directly to play_media
+  media_type: string; // media_content_type
   subtitle: string;
 }
 
-function toItem(raw: unknown): MAItem {
-  const r = (raw ?? {}) as Record<string, unknown>;
-  const mediaType = String(r.media_type ?? '');
-
-  let subtitle = '';
-  if (mediaType === 'track' || mediaType === 'album') {
-    const artists = Array.isArray(r.artists)
-      ? r.artists.map((a: unknown) => String((a as Record<string, unknown>).name ?? '')).join(', ')
-      : '';
-    subtitle = artists;
-  } else if (mediaType === 'playlist') {
-    subtitle = r.owner ? String(r.owner) : 'Playlist';
-  } else if (mediaType === 'artist') {
-    subtitle = 'Artist';
-  }
-
+function itemFromBrowse(raw: Record<string, unknown>): MAItem {
+  const mediaClass = String(raw.media_class ?? '');
+  const subtitle = mediaClass ? mediaClass.charAt(0).toUpperCase() + mediaClass.slice(1) : '';
   return {
-    item_id: String(r.item_id ?? ''),
-    name: String(r.name ?? ''),
-    image: parseImage(r),
-    uri: String(r.uri ?? ''),
-    media_type: mediaType,
+    item_id: String(raw.media_content_id ?? raw.uri ?? Math.random()),
+    name: String(raw.title ?? raw.name ?? ''),
+    image: typeof raw.thumbnail === 'string' && raw.thumbnail ? raw.thumbnail : null,
+    uri: String(raw.media_content_id ?? raw.uri ?? ''),
+    media_type: String(raw.media_content_type ?? raw.media_type ?? ''),
     subtitle,
   };
 }
 
-function toItems(raw: unknown): MAItem[] {
-  if (Array.isArray(raw)) return raw.map(toItem);
-  if (raw && typeof raw === 'object') {
-    const r = raw as Record<string, unknown>;
-    if (Array.isArray(r.items)) return r.items.map(toItem);
-  }
-  return [];
+function extractChildren(resp: unknown, entityId: string): MAItem[] {
+  if (!resp || typeof resp !== 'object') return [];
+  const r = resp as Record<string, unknown>;
+
+  // HAKit wraps service responses as resp.response[entityId]
+  const wrapped = (r.response as Record<string, unknown> | undefined)?.[entityId] as Record<string, unknown> | undefined;
+  const node = wrapped ?? r;
+  const children = node.children;
+
+  if (!Array.isArray(children)) return [];
+  return (children as Record<string, unknown>[]).filter(c => c.can_play || c.can_expand).map(itemFromBrowse);
 }
 
-// MA uses "spotify//..." internally; HA play_media expects "spotify://..."
-export function toPlayUri(uri: string): string {
-  return uri.replace(/^([a-z_]+)\/\//, '$1://');
-}
-
-// Fetch artwork for a single Spotify playlist by ID (for pinned tiles).
-// Tries two MA endpoint shapes since the path changed between MA versions.
-export async function fetchPlaylistImage(spotifyId: string): Promise<string | null> {
-  const attempts = [`/music/playlists/spotify/${spotifyId}`, `/music/playlists/${encodeURIComponent(`spotify//playlist/${spotifyId}`)}`];
-  for (const path of attempts) {
-    try {
-      const raw = await maGet(path);
-      const img = parseImage(raw);
-      if (img) return img;
-    } catch {
-      // try next
-    }
-  }
-  return null;
-}
-
-export function useMALibrary() {
+export function useMALibrary(entityId: string) {
+  const callService = useHass(s => s.helpers.callService) as unknown as AnyCall;
   const [playlists, setPlaylists] = useState<MAItem[]>([]);
   const [recentlyPlayed, setRecentlyPlayed] = useState<MAItem[]>([]);
   const [searchResults, setSearchResults] = useState<MAItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const browseMedia = useCallback(
+    (contentId?: string, contentType?: string) => {
+      const serviceData: Record<string, unknown> = {};
+      if (contentId !== undefined) serviceData.media_content_id = contentId;
+      if (contentType !== undefined) serviceData.media_content_type = contentType;
+      return callService({
+        domain: 'media_player',
+        service: 'browse_media',
+        target: { entity_id: entityId },
+        serviceData,
+        returnResponse: true,
+      });
+    },
+    [callService, entityId]
+  );
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [pl, rp] = await Promise.all([maGet('/music/playlists'), maGet('/music/recently_played')]);
-      setPlaylists(toItems(pl));
-      setRecentlyPlayed(toItems(rp));
+      const root = await browseMedia();
+      const rootSections = extractChildren(root, entityId);
+
+      // Navigate into the Spotify provider section if present
+      const spotifySection = rootSections.find(s => s.name.toLowerCase().includes('spotify') || s.uri.toLowerCase().includes('spotify'));
+      const sections = spotifySection
+        ? extractChildren(await browseMedia(spotifySection.uri, spotifySection.media_type), entityId)
+        : rootSections;
+
+      const recentSection = sections.find(s => s.name.toLowerCase().includes('recent') || s.uri.toLowerCase().includes('recent'));
+      const playlistSection = sections.find(s => s.name.toLowerCase().includes('playlist') || s.uri.toLowerCase().includes('playlist'));
+
+      const [recentResp, playlistResp] = await Promise.all([
+        recentSection ? browseMedia(recentSection.uri, recentSection.media_type) : null,
+        playlistSection ? browseMedia(playlistSection.uri, playlistSection.media_type) : null,
+      ]);
+
+      const isSpotify = (i: MAItem) => i.uri.toLowerCase().includes('spotify');
+      setRecentlyPlayed(recentResp ? extractChildren(recentResp, entityId).filter(isSpotify) : []);
+      setPlaylists(playlistResp ? extractChildren(playlistResp, entityId).filter(isSpotify) : []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed');
+      setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [browseMedia, entityId]);
 
-  const search = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    try {
-      const resp = await maGet(`/music/search?query=${encodeURIComponent(query)}&limit=25`);
-      if (Array.isArray(resp)) {
-        setSearchResults(resp.map(toItem));
-      } else if (resp && typeof resp === 'object') {
-        const r = resp as Record<string, unknown>;
-        const merged: MAItem[] = [];
-        for (const key of ['tracks', 'playlists', 'albums', 'artists']) {
-          if (Array.isArray(r[key])) merged.push(...(r[key] as unknown[]).map(toItem));
-        }
-        setSearchResults(merged);
+  const search = useCallback(
+    async (query: string) => {
+      if (!query.trim()) {
+        setSearchResults([]);
+        return;
       }
-    } catch {
-      setSearchResults([]);
-    }
-  }, []);
+      try {
+        // Spotify-scoped search via MA's spotify:// URI scheme
+        const resp = await browseMedia(`spotify://search/${encodeURIComponent(query)}`, 'search');
+        const results = extractChildren(resp, entityId);
+        if (results.length > 0) {
+          setSearchResults(results);
+          return;
+        }
+      } catch {
+        // fall through to generic search
+      }
+      try {
+        const resp = await browseMedia(`search://${encodeURIComponent(query)}`, 'search');
+        setSearchResults(extractChildren(resp, entityId).filter(i => i.uri.toLowerCase().includes('spotify')));
+      } catch {
+        setSearchResults([]);
+      }
+    },
+    [browseMedia, entityId]
+  );
 
   return { playlists, recentlyPlayed, searchResults, loading, error, load, search };
 }

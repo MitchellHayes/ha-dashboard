@@ -1,4 +1,4 @@
-# HA Dashboard — Pulse
+# HA Dashboard
 
 A wall-mounted Home Assistant dashboard built with React, TypeScript, and [@hakit/core](https://shannonhochkins.github.io/ha-component-kit/). Designed for an Echo Show 15 (1920×1080) in the kitchen and the Tesla Model 3 browser (1180×919). Layout is fully fluid using `clamp()` — no fixed canvas.
 
@@ -24,10 +24,10 @@ Copy `.env.example` to `.env` (or create one) with your values:
 
 ```env
 VITE_FOLDER_NAME=ha-dashboard
-VITE_HA_URL=https://your-ha-instance.ui.nabu.casa/
+VITE_HA_URL=https://your-ha-instance.com/
 VITE_SSH_USERNAME=root
 VITE_SSH_PASSWORD=your-ssh-password
-VITE_SSH_HOSTNAME=192.168.x.x
+VITE_SSH_HOSTNAME=x.x.x.x
 ```
 
 ## Commands

@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useEntity } from '@hakit/core';
 import { Shuffle, SkipBack, Play, Pause, SkipForward, Repeat, Volume2, Music, Heart, ChevronRight, Speaker } from 'lucide-react';
-import { fetchPlaylistImage } from '../hooks/useMALibrary';
 
 type Device = {
   id: 'kitchen' | 'deck' | 'all';
@@ -22,29 +21,33 @@ type Pinned = {
   subtitle: string;
   uri: `spotify://playlist/${string}`;
   gradient: string;
+  image?: string;
 };
 
 const PINNED: Pinned[] = [
   {
     id: 'p1',
-    name: 'Daily Mix 1',
-    subtitle: 'Made for you',
+    name: 'Discover Weekly',
+    subtitle: 'Fresh picks',
     uri: 'spotify://playlist/37i9dQZEVXcGzFtjSOqLXX',
-    gradient: 'linear-gradient(135deg, #ff6f3c 0%, #b6371f 100%)',
+    gradient: 'linear-gradient(135deg, #1a936f 0%, #114b5f 100%)',
+    image: 'https://pickasso.spotifycdn.com/image/ab67c0de0000deef/dt/v1/img/dw/cover/en',
   },
   {
     id: 'p2',
-    name: 'On Repeat',
-    subtitle: 'Your top tracks',
+    name: 'Mitchell+Michelle',
+    subtitle: 'Blend',
     uri: 'spotify://playlist/37i9dQZF1EJtU4ZS77QWrj',
-    gradient: 'linear-gradient(135deg, #2b5876 0%, #4e4376 100%)',
+    gradient: 'linear-gradient(135deg, #ff6f3c 0%, #b6371f 100%)',
+    image: 'https://blend-playlist-covers.spotifycdn.com/v2/blend_DEFAULT-tangerine-red-en.jpg',
   },
   {
     id: 'p3',
-    name: 'Discover Weekly',
-    subtitle: 'Fresh picks',
+    name: 'On Repeat',
+    subtitle: 'Your top tracks',
     uri: 'spotify://playlist/37i9dQZF1EpujlP7LCginZ',
-    gradient: 'linear-gradient(135deg, #1a936f 0%, #114b5f 100%)',
+    gradient: 'linear-gradient(135deg, #2b5876 0%, #4e4376 100%)',
+    image: 'https://pickasso.spotifycdn.com/image/ab67c0de0000deef/dt/v1/img/repeat/or/en',
   },
 ];
 
@@ -161,18 +164,7 @@ interface MediaCardProps {
 
 export function MediaCard({ onBrowseOpen }: MediaCardProps) {
   const [deviceId, setDeviceId] = useState<Device['id']>('kitchen');
-  const [pinnedImages, setPinnedImages] = useState<Record<string, string>>({});
   const active = DEVICES.find(d => d.id === deviceId) ?? DEVICES[0];
-
-  useEffect(() => {
-    void Promise.all(
-      PINNED.map(async p => {
-        const id = p.uri.replace('spotify://playlist/', '');
-        const img = await fetchPlaylistImage(id);
-        if (img) setPinnedImages(prev => ({ ...prev, [p.id]: img }));
-      })
-    );
-  }, []);
 
   // All three must be called unconditionally (Rules of Hooks)
   const kitchen = useEntity(DEVICES[0].entity);
@@ -345,7 +337,7 @@ export function MediaCard({ onBrowseOpen }: MediaCardProps) {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {PINNED.map(p => (
-            <PinnedTile key={p.id} pinned={p} image={pinnedImages[p.id]} onPlay={() => playPinned(p)} />
+            <PinnedTile key={p.id} pinned={p} image={p.image} onPlay={() => playPinned(p)} />
           ))}
         </div>
 

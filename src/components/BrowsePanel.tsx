@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useEntity } from '@hakit/core';
 import { X, Search, Music2 } from 'lucide-react';
-import { useMALibrary, type MAItem, toPlayUri } from '../hooks/useMALibrary';
+import { useMALibrary, type MAItem } from '../hooks/useMALibrary';
 
 interface BrowsePanelProps {
   open: boolean;
@@ -167,7 +167,7 @@ type AnyService = (args: Record<string, unknown>) => void;
 
 export function BrowsePanel({ open, onClose, entityId, deviceName }: BrowsePanelProps) {
   const [query, setQuery] = useState('');
-  const { playlists, recentlyPlayed, searchResults, loading, error, load, search } = useMALibrary();
+  const { playlists, recentlyPlayed, searchResults, loading, error, load, search } = useMALibrary(entityId);
   const inputRef = useRef<HTMLInputElement>(null);
   const player = useEntity(entityId as `media_player.${string}`);
 
@@ -191,7 +191,7 @@ export function BrowsePanel({ open, onClose, entityId, deviceName }: BrowsePanel
   function playItem(item: MAItem) {
     (player?.service.playMedia as unknown as AnyService)({
       serviceData: {
-        media_content_id: toPlayUri(item.uri),
+        media_content_id: item.uri,
         media_content_type: item.media_type,
       },
     });
