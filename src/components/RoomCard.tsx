@@ -75,7 +75,19 @@ export function RoomCard({ room }: { room: RoomConfig }) {
           <span className='mono' style={{ fontSize: 'var(--sz-room-temp)', fontWeight: 300, letterSpacing: '-0.04em', lineHeight: 0.95 }}>
             {tempStr}
           </span>
-          <span style={{ fontSize: 'clamp(15px, 1.25vw, 24px)', color: 'var(--text-2)', fontWeight: 300, marginLeft: -4 }}>°</span>
+          <span
+            style={{
+              fontSize: 'clamp(18px, 1.45vw, 28px)',
+              color: 'var(--text-2)',
+              fontWeight: 300,
+              marginLeft: -2,
+              alignSelf: 'flex-start',
+              lineHeight: 1,
+              transform: 'translateY(6px)',
+            }}
+          >
+            °
+          </span>
         </div>
         <div style={{ fontSize: 14, color: 'var(--text-3)', display: 'flex', gap: 12, alignItems: 'center' }}>
           {room.humidityEntity && (

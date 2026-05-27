@@ -17,7 +17,7 @@ export function useCalendarEvents(entityId: string) {
   const fetchEvents = useCallback(async () => {
     const now = new Date();
     const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 0);
+    endOfDay.setDate(endOfDay.getDate() + 7);
 
     try {
       const resp = await callService<Record<string, { events: CalendarEvent[] }>, 'calendar', 'getEvents'>({
