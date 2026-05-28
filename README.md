@@ -5,14 +5,13 @@ A wall-mounted Home Assistant dashboard built with React, TypeScript, and [@haki
 ## Features
 
 - Live room temperatures, occupancy, and light controls for 6 rooms
-- Kitchen timer with presets and SVG progress ring
 - Media player controls for the kitchen Sonos speaker
 - 5-day weather forecast
 - Grocery list (real-time sync with HA todo entity)
 - Today's calendar events
 - Recent door/motion activity feed
-- Alarm panel overlay
-- Quick actions: all lights off, alarm, front door status
+- Alarm card with inline Disarm/Stay/Away controls; tap state label for door/window sensor overlay
+- Presence strip with profile photos, location, and next calendar event
 
 ## Setup
 

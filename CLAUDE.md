@@ -21,12 +21,11 @@ npm run lint          # ESLint
 
 **Entry point:** `src/App.tsx` wraps everything in `<HassConnect>` (WebSocket auth) and `<ThemeProvider>`, then renders `<Dashboard>`.
 
-**Layout (`src/Dashboard.tsx`):** A single full-viewport grid with three rows:
-- `NowStrip` — clock, weather, presence/next-event strip
-- `pulse-main` — three columns: left (ForecastCard / TabbedListCard / ActivityCard), center (HouseOverview 3×2 room grid), right (TimerCard / MediaCard / KitchenLightsCard)
-- `QuickActionsBar` — All lights off / Alarm / Front door
+**Layout (`src/Dashboard.tsx`):** A single full-viewport grid with two rows:
+- `NowStrip` — clock, weather, presence/next-event strip (three-column, auto height)
+- `pulse-main` — three columns: left (ForecastCard / TabbedListCard / ActivityCard), center (HouseOverview 3×2 room grid), right (AlarmCard / MediaCard)
 
-`AlarmPanel` is an overlay rendered inside `Dashboard`, toggled via `alarmOpen` state.
+`AlarmCard` manages its own `panelOpen` state; tapping the state indicator renders `AlarmPanel` as an absolute-positioned overlay for door/window sensor details.
 
 **Responsive sizing:** The layout uses `clamp()` throughout — no fixed 1920×1080 canvas. Grid column widths, row heights, padding, and large display font sizes all clamp between a Tesla-viewport minimum (~1180px) and Echo Show maximum (1920px). CSS vars for display fonts: `--sz-clock`, `--sz-weather-temp`, `--sz-room-temp`, `--sz-timer`.
 
@@ -75,9 +74,10 @@ useEffect(() => { void fetch(); }, [entityState, fetch]);
 ## Design System
 
 All tokens live in `src/index.css` as CSS custom properties. Key ones:
-- Colors: `--bg`, `--bg-deep`, `--card`, `--card-2`, `--border`, `--text`, `--text-2`, `--text-3`, `--accent` (#f5a623 amber), `--accent-2`, `--ok` (green), `--alert` (red), `--cool` (blue), `--warm`
+- Colors: `--bg`, `--bg-deep`, `--card`, `--card-2`, `--border`, `--text`, `--text-2`, `--text-3`, `--accent` (#ffbf47 amber), `--accent-2`, `--ok` (green), `--alert` (red), `--cool` (blue), `--warm`
 - Typography: `--font` (Geist), `--mono` (Geist Mono)
 - Shape: `--radius` (20px), `--radius-md`, `--radius-sm`
+- Display font sizes: `--sz-clock`, `--sz-weather-temp`, `--sz-room-temp`
 
 Utility classes: `.card`, `.room`, `.ibtn`, `.ibtn.sm`, `.ibtn.primary`, `.switch`, `.switch.on`, `.dot`, `.dot.live`, `.pill`, `.pill.on`, `.slider`, `.mono`, `.label`, `.card-title`, `.card-action`, `.card-h`, `.col`, `.col-flex`, `.grow`, `.between`, `.divider`
 
@@ -88,14 +88,15 @@ Icon library is **Lucide React** (stroke-based). Use `strokeWidth={1.5}` for reg
 | Purpose | Entity ID |
 |---|---|
 | Weather | `weather.openweathermap` |
-| Kitchen timer | `timer.kitchen_timer` |
 | Alarm | `alarm_control_panel.alarm_control_panel` |
 | Shopping list | `todo.shopping_list` |
 | Family calendar | `calendar.family_calendar` |
 | Kitchen speaker | `media_player.kitchen_speaker_2` |
 | Kitchen group light | `light.kitchen_and_dining_room_lights` |
 | Persons | `person.mitchell`, `person.michelle`, `person.ryan` |
+| Dog tracker | `device_tracker.takumi_tracker` |
 | Front/back door | `binary_sensor.front_door_entry`, `binary_sensor.back_door_entry` |
+| Garage / patio | `binary_sensor.garage_entry`, `binary_sensor.patio_window_entry` |
 | Sunset sensor | `sensor.sun_next_setting` |
 
 Room entity mappings are in `src/components/HouseOverview.tsx` in the `ROOMS` array.
