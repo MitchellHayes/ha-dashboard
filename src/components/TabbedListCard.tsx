@@ -109,25 +109,32 @@ export function TabbedListCard() {
       <div className='grow' style={{ padding: '12px 20px 16px', display: 'flex', flexDirection: 'column', gap: 2, overflow: 'hidden' }}>
         {tab === 'grocery' ? (
           pending.length > 0 ? (
-            pending.slice(0, 6).map((item, i) => (
-              <button
-                key={item.uid}
-                onClick={() => completeItem(item.uid)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '7px 0',
-                  textAlign: 'left',
-                  borderBottom: i < Math.min(pending.length, 6) - 1 ? '1px solid var(--border)' : 'none',
-                }}
-              >
-                <Square size={20} color='var(--text-3)' strokeWidth={1.5} style={{ flexShrink: 0 }} />
-                <span style={{ fontSize: 16, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {item.summary}
-                </span>
-              </button>
-            ))
+            <>
+              {pending.slice(0, 6).map((item, i) => (
+                <button
+                  key={item.uid}
+                  onClick={() => completeItem(item.uid)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '7px 0',
+                    textAlign: 'left',
+                    borderBottom: i < Math.min(pending.length, 6) - 1 ? '1px solid var(--border)' : 'none',
+                  }}
+                >
+                  <Square size={20} color='var(--text-3)' strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: 16, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {item.summary}
+                  </span>
+                </button>
+              ))}
+              {pending.length > 6 && (
+                <div style={{ fontSize: 13, color: 'var(--text-3)', padding: '6px 0 0', textAlign: 'center' }}>
+                  +{pending.length - 6} more
+                </div>
+              )}
+            </>
           ) : (
             <div style={{ fontSize: 15, color: 'var(--text-3)', fontStyle: 'italic', padding: '8px 0' }}>
               All caught up — nothing to pick up.

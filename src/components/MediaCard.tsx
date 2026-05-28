@@ -200,8 +200,8 @@ export function MediaCard() {
   function shuffleLiked() {
     (player?.service.playMedia as unknown as AnyService)({
       serviceData: {
-        media_content_id: 'spotify://library/liked_songs',
-        media_content_type: 'playlist',
+        media_content_id: 'library://playlist/66',
+        media_content_type: 'music',
       },
     });
     player?.service.shuffleSet({ serviceData: { shuffle: true } });
