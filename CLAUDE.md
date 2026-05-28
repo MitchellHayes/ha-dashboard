@@ -23,7 +23,7 @@ npm run lint          # ESLint
 
 **Layout (`src/Dashboard.tsx`):** A single full-viewport grid with two rows:
 - `NowStrip` — clock, weather, presence/next-event strip (three-column, auto height)
-- `pulse-main` — three columns: left (ForecastCard / TabbedListCard / ActivityCard), center (HouseOverview 3×2 room grid), right (AlarmCard / MediaCard)
+- `pulse-main` — three columns: left (ForecastCard / TabbedListCard / ActivityCard), center (HouseOverview 3×2 room grid), right (ClimateCard / AlarmCard / MediaCard)
 
 `AlarmCard` manages its own `panelOpen` state; tapping the state indicator renders `AlarmPanel` as an absolute-positioned overlay for door/window sensor details.
 
@@ -98,6 +98,7 @@ Icon library is **Lucide React** (stroke-based). Use `strokeWidth={1.5}` for reg
 | Front/back door | `binary_sensor.front_door_entry`, `binary_sensor.back_door_entry` |
 | Garage / patio | `binary_sensor.garage_entry`, `binary_sensor.patio_window_entry` |
 | Sunset sensor | `sensor.sun_next_setting` |
+| Thermostat | `climate.thermostat` (modes: heat\_cool / heat / cool / off; single setpoint in heat/cool, high+low range in heat\_cool) |
 
 Room entity mappings are in `src/components/HouseOverview.tsx` in the `ROOMS` array.
 

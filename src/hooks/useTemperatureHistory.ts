@@ -1,31 +1,26 @@
 import { useEffect, useState } from 'react';
 
 function getHassAuth(): { hassUrl: string; token: string } | null {
-  try {
-    const raw = localStorage.getItem('hassTokens');
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { hassUrl?: string; access_token?: string };
-    if (!parsed.hassUrl || !parsed.access_token) return null;
-    return { hassUrl: parsed.hassUrl.replace(/\/$/, ''), token: parsed.access_token };
-  } catch {
-    return null;
-  }
+  const hassUrl = import.meta.env.VITE_HA_URL as string | undefined;
+  const token = import.meta.env.VITE_HA_TOKEN as string | undefined;
+  if (!hassUrl || !token) return null;
+  return { hassUrl: hassUrl.replace(/\/$/, ''), token };
 }
 
 export function useTemperatureHistory(entityId: string): number[] {
   const [points, setPoints] = useState<number[]>([]);
 
   useEffect(() => {
-    const auth = getHassAuth();
-    if (!auth) return;
+    async function fetch24h() {
+      const auth = getHassAuth();
+      if (!auth) return;
 
-    const end = new Date();
-    const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
-    const url =
-      `${auth.hassUrl}/api/history/period/${start.toISOString()}` +
-      `?filter_entity_id=${entityId}&minimal_response=true&significant_changes_only=false&end_time=${end.toISOString()}`;
+      const end = new Date();
+      const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+      const url =
+        `${auth.hassUrl}/api/history/period/${start.toISOString()}` +
+        `?filter_entity_id=${entityId}&minimal_response=true&significant_changes_only=false&end_time=${end.toISOString()}`;
 
-    void (async () => {
       try {
         const res = await fetch(url, { headers: { Authorization: `Bearer ${auth.token}` } });
         if (!res.ok) return;
@@ -50,7 +45,11 @@ export function useTemperatureHistory(entityId: string): number[] {
       } catch {
         // silently leave sparkline empty
       }
-    })();
+    }
+
+    void fetch24h();
+    const id = setInterval(() => void fetch24h(), 5 * 60_000);
+    return () => clearInterval(id);
   }, [entityId]);
 
   return points;

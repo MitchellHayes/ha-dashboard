@@ -100,12 +100,12 @@ function PersonTile({ name, initial, picturePath, state }: { name: string; initi
   const loc = locStr(state);
 
   return (
-    <div style={{ display: 'grid', gridTemplateRows: 'auto 20px 16px', justifyItems: 'center', rowGap: 6, minWidth: 88 }}>
+    <div style={{ display: 'grid', gridTemplateRows: 'auto 20px 16px', justifyItems: 'center', rowGap: 6, minWidth: 74 }}>
       {/* Avatar */}
       <div
         style={{
-          width: 88,
-          height: 88,
+          width: 74,
+          height: 74,
           borderRadius: '50%',
           backgroundImage: photoUrl
             ? `url(${photoUrl})`
@@ -118,7 +118,7 @@ function PersonTile({ name, initial, picturePath, state }: { name: string; initi
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 28,
+          fontSize: 24,
           fontWeight: 500,
           border: `2px solid ${home ? 'rgba(255,191,71,0.35)' : 'rgba(255,255,255,0.20)'}`,
           position: 'relative' as const,
@@ -176,7 +176,7 @@ function WeatherBlock() {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        padding: '20px 32px',
+        padding: '14px 32px',
         borderLeft: '1px solid var(--border)',
         gap: 12,
       }}
@@ -236,7 +236,7 @@ function PresenceBlock() {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '18px 28px',
+        padding: '14px 28px',
         borderLeft: '1px solid var(--border)',
         flex: 1,
         gap: 32,
@@ -303,7 +303,7 @@ export function NowStrip() {
       }}
     >
       {/* Clock block */}
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px 32px', gap: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '14px 32px', gap: 12 }}>
         <div>
           <span className='mono' style={{ fontSize: 'var(--sz-clock)', fontWeight: 300, letterSpacing: '-0.045em', lineHeight: 0.85 }}>
             {t.h}

@@ -3,13 +3,12 @@ import { useEntity } from '@hakit/core';
 import { Shield, Unlock, ChevronRight, Camera } from 'lucide-react';
 import { AlarmPanel } from './AlarmPanel';
 
-function buildStreamUrl(entityId: string): string {
+function getHassUrl(): string {
   try {
     const raw = localStorage.getItem('hassTokens');
     if (!raw) return '';
-    const parsed = JSON.parse(raw) as { hassUrl?: string; access_token?: string };
-    if (!parsed.hassUrl || !parsed.access_token) return '';
-    return `${parsed.hassUrl.replace(/\/$/, '')}/api/camera_proxy_stream/${entityId}?token=${parsed.access_token}`;
+    const parsed = JSON.parse(raw) as { hassUrl?: string };
+    return parsed.hassUrl?.replace(/\/$/, '') ?? '';
   } catch {
     return '';
   }
@@ -21,7 +20,7 @@ function CameraButton({ name, onClick }: { name: string; onClick: () => void }) 
       onClick={onClick}
       style={{
         flex: 1,
-        padding: '10px 12px',
+        padding: '8px 10px',
         borderRadius: 12,
         background: 'var(--card-2)',
         border: '1px solid var(--border)',
@@ -59,7 +58,11 @@ function CameraButton({ name, onClick }: { name: string; onClick: () => void }) 
 }
 
 function CameraOverlay({ entityId, onClose }: { entityId: string; onClose: () => void }) {
-  const src = buildStreamUrl(entityId);
+  const camera = useEntity(entityId as `camera.${string}`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cameraToken = (camera?.attributes as any)?.access_token as string | undefined;
+  const hassUrl = getHassUrl();
+  const src = hassUrl && cameraToken ? `${hassUrl}/api/camera_proxy_stream/${entityId}?token=${cameraToken}` : '';
   const label = entityId.replace(/^camera\./, '').replace(/_/g, ' ');
 
   return (

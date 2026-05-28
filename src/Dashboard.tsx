@@ -5,6 +5,7 @@ import { TabbedListCard } from './components/TabbedListCard';
 import { ActivityCard } from './components/ActivityCard';
 import { HouseOverview } from './components/HouseOverview';
 import { AlarmCard } from './components/AlarmCard';
+import { ClimateCard } from './components/ClimateCard';
 import { MediaCard } from './components/MediaCard';
 
 function Dashboard() {
@@ -27,6 +28,7 @@ function Dashboard() {
             <HouseOverview />
 
             <div className='col'>
+              <ClimateCard />
               <AlarmCard />
               <MediaCard />
             </div>

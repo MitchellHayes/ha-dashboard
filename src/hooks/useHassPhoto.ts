@@ -1,15 +1,10 @@
 import { useEffect, useState } from 'react';
 
 function getHassAuth(): { hassUrl: string; token: string } | null {
-  try {
-    const raw = localStorage.getItem('hassTokens');
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { hassUrl?: string; access_token?: string };
-    if (!parsed.hassUrl || !parsed.access_token) return null;
-    return { hassUrl: parsed.hassUrl.replace(/\/$/, ''), token: parsed.access_token };
-  } catch {
-    return null;
-  }
+  const hassUrl = import.meta.env.VITE_HA_URL as string | undefined;
+  const token = import.meta.env.VITE_HA_TOKEN as string | undefined;
+  if (!hassUrl || !token) return null;
+  return { hassUrl: hassUrl.replace(/\/$/, ''), token };
 }
 
 export function useHassPhoto(entityPicturePath: string | null | undefined): string {

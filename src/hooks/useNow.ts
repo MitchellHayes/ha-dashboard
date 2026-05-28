@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export function useNow(intervalMs = 5000) {
+export function useNow(intervalMs = 1000) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), intervalMs);

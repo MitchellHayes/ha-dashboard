@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useEntity } from '@hakit/core';
-import { Shuffle, SkipBack, Play, Pause, SkipForward, Repeat, Volume2, Music, Heart, Speaker } from 'lucide-react';
+import { SkipBack, Play, Pause, SkipForward, Volume2, Music, Speaker } from 'lucide-react';
 
 type Device = {
   id: 'kitchen' | 'deck' | 'all';
@@ -18,7 +18,6 @@ const DEVICES: Device[] = [
 type Pinned = {
   id: string;
   name: string;
-  subtitle: string;
   uri: `spotify://playlist/${string}`;
   gradient: string;
   image?: string;
@@ -28,7 +27,6 @@ const PINNED: Pinned[] = [
   {
     id: 'p1',
     name: 'Discover Weekly',
-    subtitle: 'Fresh picks',
     uri: 'spotify://playlist/37i9dQZEVXcGzFtjSOqLXX',
     gradient: 'linear-gradient(135deg, #1a936f 0%, #114b5f 100%)',
     image: 'https://pickasso.spotifycdn.com/image/ab67c0de0000deef/dt/v1/img/dw/cover/en',
@@ -36,7 +34,6 @@ const PINNED: Pinned[] = [
   {
     id: 'p2',
     name: 'Mitchell+Michelle',
-    subtitle: 'Blend',
     uri: 'spotify://playlist/37i9dQZF1EJtU4ZS77QWrj',
     gradient: 'linear-gradient(135deg, #ff6f3c 0%, #b6371f 100%)',
     image: 'https://blend-playlist-covers.spotifycdn.com/v2/blend_DEFAULT-tangerine-red-en.jpg',
@@ -44,7 +41,6 @@ const PINNED: Pinned[] = [
   {
     id: 'p3',
     name: 'On Repeat',
-    subtitle: 'Your top tracks',
     uri: 'spotify://playlist/37i9dQZF1EpujlP7LCginZ',
     gradient: 'linear-gradient(135deg, #2b5876 0%, #4e4376 100%)',
     image: 'https://pickasso.spotifycdn.com/image/ab67c0de0000deef/dt/v1/img/repeat/or/en',
@@ -115,8 +111,8 @@ function PinnedTile({ pinned, image, onPlay }: { pinned: Pinned; image?: string;
       >
         <span
           style={{
-            width: 20,
-            height: 20,
+            width: 18,
+            height: 18,
             borderRadius: 999,
             background: 'rgba(0,0,0,0.45)',
             display: 'flex',
@@ -150,9 +146,7 @@ function PinnedTile({ pinned, image, onPlay }: { pinned: Pinned; image?: string;
             overflow: 'hidden',
             textOverflow: 'ellipsis',
           }}
-        >
-          {pinned.subtitle}
-        </div>
+        ></div>
       </div>
     </button>
   );
@@ -178,8 +172,6 @@ export function MediaCard() {
   const position = (attrs as { media_position?: number }).media_position ?? 0;
   const progress = duration > 0 ? Math.min(100, Math.round((position / duration) * 100)) : 0;
   const entityPicture = (attrs as { entity_picture?: string }).entity_picture;
-  const shuffle = (attrs as { shuffle?: boolean }).shuffle ?? false;
-  const repeat = (attrs as { repeat?: string }).repeat ?? 'off';
 
   function setVolume(e: React.ChangeEvent<HTMLInputElement>) {
     player?.service.volumeSet({ serviceData: { volume_level: Number(e.target.value) / 100 } });
@@ -197,16 +189,6 @@ export function MediaCard() {
     });
   }
 
-  function shuffleLiked() {
-    (player?.service.playMedia as unknown as AnyService)({
-      serviceData: {
-        media_content_id: 'library://playlist/66',
-        media_content_type: 'music',
-      },
-    });
-    player?.service.shuffleSet({ serviceData: { shuffle: true } });
-  }
-
   return (
     <div className='card'>
       <div className='card-h'>
@@ -222,8 +204,8 @@ export function MediaCard() {
         {/* Album art */}
         <div
           style={{
-            width: 78,
-            height: 78,
+            width: 72,
+            height: 72,
             borderRadius: 12,
             flexShrink: 0,
             background: entityPicture ? undefined : 'linear-gradient(135deg, #5a3a1c 0%, #2d1d10 50%, #1a1100 100%)',
@@ -262,36 +244,19 @@ export function MediaCard() {
         </div>
       </div>
 
-      {/* Transport */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 10 }}>
-        <button
-          className='ibtn sm'
-          style={{ color: shuffle ? 'var(--accent)' : 'var(--text-3)' }}
-          onClick={() => player?.service.shuffleSet({ serviceData: { shuffle: !shuffle } })}
-        >
-          <Shuffle size={15} />
-        </button>
-        <button className='ibtn' onClick={() => player?.service.mediaPreviousTrack()}>
+      {/* Transport + volume */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
+        <button className='ibtn' aria-label='Previous track' onClick={() => player?.service.mediaPreviousTrack()}>
           <SkipBack size={20} />
         </button>
-        <button className='ibtn primary' onClick={() => player?.service.mediaPlayPause()}>
-          {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+        <button className='ibtn primary' aria-label={isPlaying ? 'Pause' : 'Play'} onClick={() => player?.service.mediaPlayPause()}>
+          {isPlaying ? <Pause size={20} /> : <Play size={20} />}
         </button>
-        <button className='ibtn' onClick={() => player?.service.mediaNextTrack()}>
+        <button className='ibtn' aria-label='Next track' onClick={() => player?.service.mediaNextTrack()}>
           <SkipForward size={20} />
         </button>
-        <button
-          className='ibtn sm'
-          style={{ color: repeat !== 'off' ? 'var(--accent)' : 'var(--text-3)' }}
-          onClick={() => player?.service.repeatSet({ serviceData: { repeat: repeat === 'off' ? 'all' : 'off' } })}
-        >
-          <Repeat size={15} />
-        </button>
-      </div>
-
-      {/* Volume */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
-        <Volume2 size={15} color='var(--text-3)' strokeWidth={1.5} style={{ flexShrink: 0 }} />
+        <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 6px' }} aria-hidden='true' />
+        <Volume2 size={16} color='var(--text-3)' strokeWidth={1.5} style={{ flexShrink: 0 }} />
         <input
           type='range'
           min='0'
@@ -299,32 +264,21 @@ export function MediaCard() {
           value={volume}
           className='slider'
           onChange={setVolume}
-          style={{ '--p': `${volume}%` } as React.CSSProperties}
+          style={{ '--p': `${volume}%`, flex: 1, minWidth: 0 } as React.CSSProperties}
+          aria-label='Volume'
+          aria-valuetext={`${volume} percent`}
         />
-        <span className='mono' style={{ fontSize: 14, color: 'var(--text-3)', width: 28, textAlign: 'right', flexShrink: 0 }}>
+        <span className='mono' style={{ fontSize: 13, color: 'var(--text-3)', width: 22, textAlign: 'right', flexShrink: 0 }}>
           {volume}
         </span>
       </div>
 
-      {/* Start something */}
       <div style={{ marginTop: 12 }}>
-        <div style={{ marginBottom: 8 }}>
-          <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-3)' }}>
-            Start something
-          </span>
-        </div>
-
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {PINNED.map(p => (
             <PinnedTile key={p.id} pinned={p} image={p.image} onPlay={() => playPinned(p)} />
           ))}
         </div>
-
-        <button className='liked-pill' onClick={shuffleLiked}>
-          <Heart size={13} fill='currentColor' style={{ color: 'var(--accent)' }} />
-          <span>Shuffle Liked Songs</span>
-          <Shuffle size={12} style={{ color: 'var(--text-3)' }} />
-        </button>
       </div>
     </div>
   );
