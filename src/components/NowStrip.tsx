@@ -6,6 +6,7 @@ import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { useHassPhoto } from '../hooks/useHassPhoto';
 
 const DAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function pad2(n: number) {
@@ -28,6 +29,19 @@ function fmtEventTime(isoStr: string): string {
   const ampm = h >= 12 ? 'p' : 'a';
   h = h % 12 || 12;
   return m === 0 ? `${h}${ampm}` : `${h}:${pad2(m)}${ampm}`;
+}
+
+function fmtEventDate(isoStr: string): string | null {
+  const raw = /^\d{4}-\d{2}-\d{2}$/.test(isoStr) ? `${isoStr}T00:00:00` : isoStr;
+  const d = new Date(raw);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const eventDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((eventDay.getTime() - today.getTime()) / 86_400_000);
+  if (diffDays <= 0) return null;
+  if (diffDays === 1) return 'Tomorrow';
+  if (diffDays <= 6) return DAYS_SHORT[d.getDay()];
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
 }
 
 function relFromNow(isoStr: string, now: Date): string {
@@ -211,6 +225,7 @@ function PresenceBlock() {
   const next = events[0];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nextLoc = next ? ((next as any).location as string | undefined) : undefined;
+  const dateLabel = next ? fmtEventDate(next.start) : null;
   const relTime = next ? relFromNow(next.start, now) : '';
   const metaParts = [nextLoc, relTime].filter(Boolean) as string[];
 
@@ -249,7 +264,7 @@ function PresenceBlock() {
         >
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, flexShrink: 0 }}>
             <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--text-3)' }}>
-              Next
+              {dateLabel ? `Next · ${dateLabel}` : 'Next'}
             </span>
             <span
               className='mono'
