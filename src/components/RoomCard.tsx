@@ -1,5 +1,6 @@
 import { useEntity } from '@hakit/core';
 import { Lightbulb, LightbulbOff, Droplets, Music, DoorOpen } from 'lucide-react';
+import { useTemperatureHistory } from '../hooks/useTemperatureHistory';
 
 export interface RoomConfig {
   name: string;
@@ -12,20 +13,19 @@ export interface RoomConfig {
   doorEntity?: string;
 }
 
-// Deterministic sparkline path from entity ID seed
-function sparkPath(seed: number, w: number, h: number): string {
-  const pts: [number, number][] = [];
-  let v = 0.5;
-  let s = seed;
-  for (let i = 0; i < 24; i++) {
-    s = (s * 9301 + 49297) % 233280;
-    v = Math.max(0.1, Math.min(0.9, v + (s / 233280 - 0.5) * 0.25));
-    pts.push([(i / 23) * w, h - v * h]);
-  }
-  return 'M ' + pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' L ');
-}
-function hashStr(s: string) {
-  return s.split('').reduce((a, c) => a + c.charCodeAt(0), 7);
+function pointsToPath(pts: number[], w: number, h: number): string {
+  if (pts.length < 2) return '';
+  const pad = 2;
+  return (
+    'M ' +
+    pts
+      .map((v, i) => {
+        const x = (i / (pts.length - 1)) * w;
+        const y = pad + (1 - v) * (h - pad * 2);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(' L ')
+  );
 }
 
 export function RoomCard({ room }: { room: RoomConfig }) {
@@ -47,7 +47,8 @@ export function RoomCard({ room }: { room: RoomConfig }) {
   const occupied = room.motionEntity ? motionEnt?.state === 'on' : false;
   const isPlaying = room.mediaEntity ? mediaEnt?.state === 'playing' : false;
   const isDoorOpen = room.doorEntity ? doorEnt?.state === 'on' : false;
-  const path = sparkPath(hashStr(room.lightEntity), 220, 32);
+  const historyPoints = useTemperatureHistory(room.tempEntity);
+  const path = pointsToPath(historyPoints, 220, 32);
 
   function toggleLight(e: React.MouseEvent) {
     e.stopPropagation();
@@ -108,10 +109,12 @@ export function RoomCard({ room }: { room: RoomConfig }) {
           )}
         </div>
 
-        {/* Sparkline */}
-        <svg viewBox='0 0 220 36' preserveAspectRatio='none' style={{ width: '100%', height: 36, marginTop: 4, opacity: 0.65 }}>
-          <path d={path} fill='none' stroke='var(--text-3)' strokeWidth='1.5' strokeLinejoin='round' strokeLinecap='round' />
-        </svg>
+        {/* Sparkline — hidden until real history loads */}
+        {path && (
+          <svg viewBox='0 0 220 36' preserveAspectRatio='none' style={{ width: '100%', height: 36, marginTop: 4, opacity: 0.65 }}>
+            <path d={path} fill='none' stroke='var(--text-3)' strokeWidth='1.5' strokeLinejoin='round' strokeLinecap='round' />
+          </svg>
+        )}
       </div>
 
       <div className='divider' />
