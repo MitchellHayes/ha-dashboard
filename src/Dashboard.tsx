@@ -9,22 +9,11 @@ import { TimerCard } from './components/TimerCard';
 import { MediaCard } from './components/MediaCard';
 import { QuickActionsBar } from './components/QuickActionsBar';
 import { AlarmPanel } from './components/AlarmPanel';
-import { BrowsePanel } from './components/BrowsePanel';
-
 function Dashboard() {
   const [alarmOpen, setAlarmOpen] = useState(false);
-  const [browseEntityId, setBrowseEntityId] = useState('media_player.kitchen_speaker_2');
-  const [browseDeviceName, setBrowseDeviceName] = useState('Kitchen');
-  const [browseOpen, setBrowseOpen] = useState(false);
 
   const sunState = useHass(s => (s.entities as Record<string, { state: string }>)['sun.sun']?.state);
   const theme = sunState === 'above_horizon' ? 'light' : 'hc';
-
-  function openBrowse(entityId: string, deviceName: string) {
-    setBrowseEntityId(entityId);
-    setBrowseDeviceName(deviceName);
-    setBrowseOpen(true);
-  }
 
   return (
     <div className='pulse-stage'>
@@ -43,7 +32,7 @@ function Dashboard() {
 
             <div className='col'>
               <TimerCard />
-              <MediaCard onBrowseOpen={openBrowse} />
+              <MediaCard />
             </div>
           </div>
 
@@ -51,7 +40,6 @@ function Dashboard() {
         </div>
 
         <AlarmPanel open={alarmOpen} onClose={() => setAlarmOpen(false)} />
-        <BrowsePanel open={browseOpen} onClose={() => setBrowseOpen(false)} entityId={browseEntityId} deviceName={browseDeviceName} />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useEntity } from '@hakit/core';
-import { Shuffle, SkipBack, Play, Pause, SkipForward, Repeat, Volume2, Music, Heart, ChevronRight, Speaker } from 'lucide-react';
+import { Shuffle, SkipBack, Play, Pause, SkipForward, Repeat, Volume2, Music, Heart, Speaker } from 'lucide-react';
 
 type Device = {
   id: 'kitchen' | 'deck' | 'all';
@@ -158,13 +158,8 @@ function PinnedTile({ pinned, image, onPlay }: { pinned: Pinned; image?: string;
   );
 }
 
-interface MediaCardProps {
-  onBrowseOpen: (entityId: string, deviceName: string) => void;
-}
-
-export function MediaCard({ onBrowseOpen }: MediaCardProps) {
+export function MediaCard() {
   const [deviceId, setDeviceId] = useState<Device['id']>('kitchen');
-  const active = DEVICES.find(d => d.id === deviceId) ?? DEVICES[0];
 
   // All three must be called unconditionally (Rules of Hooks)
   const kitchen = useEntity(DEVICES[0].entity);
@@ -313,26 +308,10 @@ export function MediaCard({ onBrowseOpen }: MediaCardProps) {
 
       {/* Start something */}
       <div style={{ marginTop: 12 }}>
-        <div className='between' style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 8 }}>
           <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-3)' }}>
             Start something
           </span>
-          <button
-            onClick={() => onBrowseOpen(active.entity, active.name)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 2,
-              fontSize: 11,
-              color: 'var(--text-3)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-            }}
-          >
-            Browse <ChevronRight size={11} />
-          </button>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
