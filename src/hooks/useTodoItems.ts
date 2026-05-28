@@ -18,7 +18,7 @@ export function useTodoItems(entityId: string) {
   const entityState = useHass(s => (s.entities as Record<string, { state: string }>)[entityId]?.state);
   const [items, setItems] = useState<TodoItem[]>([]);
 
-  const fetchItems = useCallback(async () => {
+  const fetchItems = useCallback(async (): Promise<TodoItem[] | null> => {
     try {
       const resp = await callService({
         domain: 'todo',
@@ -27,22 +27,30 @@ export function useTodoItems(entityId: string) {
         serviceData: { status: 'needs_action' },
         returnResponse: true,
       });
-      const raw: TodoItem[] = resp?.response?.[entityId]?.items ?? [];
-      setItems(raw);
+      return (resp?.response?.[entityId]?.items ?? []) as TodoItem[];
     } catch {
-      // silently ignore
+      return null;
     }
   }, [callService, entityId]);
 
   // Refetch whenever HA pushes a state change for this todo entity.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    void fetchItems();
+    let cancelled = false;
+    void (async () => {
+      const data = await fetchItems();
+      if (!cancelled && data !== null) setItems(data);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [entityState, fetchItems]);
 
   // Fallback poll in case a change doesn't alter the item count (e.g. rename).
   useEffect(() => {
-    const id = setInterval(fetchItems, 30_000);
+    const id = setInterval(async () => {
+      const data = await fetchItems();
+      if (data !== null) setItems(data);
+    }, 30_000);
     return () => clearInterval(id);
   }, [fetchItems]);
 
@@ -59,5 +67,10 @@ export function useTodoItems(entityId: string) {
     [callService, entityId]
   );
 
-  return { items, refetch: fetchItems, completeItem };
+  const refetch = useCallback(async () => {
+    const data = await fetchItems();
+    if (data !== null) setItems(data);
+  }, [fetchItems]);
+
+  return { items, refetch, completeItem };
 }

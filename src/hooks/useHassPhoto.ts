@@ -13,28 +13,30 @@ export function useHassPhoto(entityPicturePath: string | null | undefined): stri
   useEffect(() => {
     if (!entityPicturePath) return;
 
-    // Absolute URL (e.g. external CDN) — use directly, no auth needed
-    if (/^https?:\/\//.test(entityPicturePath)) {
-      setObjectUrl(entityPicturePath);
-      return;
-    }
-
-    const auth = getHassAuth();
-    if (!auth) return;
-
     let cancelled = false;
     let blobUrl = '';
 
     void (async () => {
       try {
-        const res = await fetch(`${auth.hassUrl}${entityPicturePath}`, {
-          headers: { Authorization: `Bearer ${auth.token}` },
-        });
-        if (!res.ok || cancelled) return;
-        const blob = await res.blob();
-        if (cancelled) return;
-        blobUrl = URL.createObjectURL(blob);
-        setObjectUrl(blobUrl);
+        let url: string;
+        if (/^https?:\/\//.test(entityPicturePath)) {
+          // Absolute URL — use directly, no auth needed.
+          // await defers setState out of the synchronous effect body.
+          await Promise.resolve();
+          url = entityPicturePath;
+        } else {
+          const auth = getHassAuth();
+          if (!auth) return;
+          const res = await fetch(`${auth.hassUrl}${entityPicturePath}`, {
+            headers: { Authorization: `Bearer ${auth.token}` },
+          });
+          if (!res.ok || cancelled) return;
+          const blob = await res.blob();
+          if (cancelled) return;
+          blobUrl = URL.createObjectURL(blob);
+          url = blobUrl;
+        }
+        if (!cancelled) setObjectUrl(url);
       } catch {
         // leave empty — caller shows fallback
       }

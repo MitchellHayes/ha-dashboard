@@ -3664,6 +3664,80 @@ declare module '@hakit/core' {
         }
       >;
     };
+    frigate: {
+      // Export a custom recording or timelapse.
+      exportRecording: ServiceFunction<
+        object,
+        T,
+        {
+          // Playback factor for recordings @example realtime
+          playback_factor: 'realtime' | 'timelapse_25x';
+          // Start time of exported recording @constraints  datetime:
+          start_time: string;
+          // End time of exported recording @constraints  datetime:
+          end_time: string;
+          // Optional name for the exported recording. If not provided, the API will generate one.
+          name?: string;
+        }
+      >;
+      // Favorites or unfavorites an event. Favorited events are retained indefinitely.
+      favoriteEvent: ServiceFunction<
+        object,
+        T,
+        {
+          // ID of the event to favorite or unfavorite. @example 1656510950.19548-ihtjj7
+          event_id: string;
+          // If the event should be favorited or unfavorited. Enable to favorite, disable to unfavorite.  @example true @constraints  boolean:
+          favorite?: boolean;
+        }
+      >;
+      // Pan / Tilt, Zoom, or move a camera to a preset
+      ptz: ServiceFunction<
+        object,
+        T,
+        {
+          // Type of PTZ action @example move
+          action: 'move' | 'preset' | 'stop' | 'zoom';
+          // left, right, up, down for move; in, out for zoom; name of preset  @example down
+          argument?: string;
+        }
+      >;
+      // Create a manual event with a given label for a camera.
+      createEvent: ServiceFunction<
+        object,
+        T,
+        {
+          // Label for the event @example Doorbell press
+          label: string;
+          // Sub label for the event @example Front door
+          sub_label?: string;
+          // Predetermined length of event. Default is 30 seconds. Use 0 for indefinite.  @example 30 @constraints  number: min: 0, max: 300, step: 1, mode: slider
+          duration?: number;
+          // Whether the event should save recordings along with the snapshot that is taken.  @example true @constraints  boolean:
+          include_recording?: boolean;
+        }
+      >;
+      // End a manual event with a given id for a camera.
+      endEvent: ServiceFunction<
+        object,
+        T,
+        {
+          // ID of the event to end. @example 1656510950.19548-ihtjj7
+          event_id: string;
+        }
+      >;
+      // Get a summary of review items for a specified time period. Only available in Frigate 0.17+.
+      reviewSummarize: ServiceFunction<
+        object,
+        T,
+        {
+          // Start time for the review period @constraints  datetime:
+          start_time: string;
+          // End time for the review period @constraints  datetime:
+          end_time: string;
+        }
+      >;
+    };
   }
   export interface CustomEntityNameContainer {
     names:
@@ -5092,6 +5166,7 @@ declare module '@hakit/core' {
       | 'automation.blinds_am_sun_based'
       | 'zone.walmart'
       | 'automation.lights_game_room_tv_sync'
-      | 'automation.lights_game_room_sync_with_main';
+      | 'automation.lights_game_room_sync_with_main'
+      | 'timer.kitchen_timer';
   }
 }

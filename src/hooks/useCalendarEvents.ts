@@ -14,7 +14,7 @@ export function useCalendarEvents(entityId: string) {
   const entityState = useHass(s => (s.entities as Record<string, { state: string }>)[entityId]?.state);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
-  const fetchEvents = useCallback(async () => {
+  const fetchEvents = useCallback(async (): Promise<CalendarEvent[] | null> => {
     const now = new Date();
     const endOfDay = new Date(now);
     endOfDay.setDate(endOfDay.getDate() + 7);
@@ -31,19 +31,28 @@ export function useCalendarEvents(entityId: string) {
         returnResponse: true,
       });
       const raw = resp?.response?.[entityId]?.events ?? [];
-      setEvents(raw.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()));
+      return raw.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
     } catch {
-      // silently ignore
+      return null;
     }
   }, [callService, entityId]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    void fetchEvents();
+    let cancelled = false;
+    void (async () => {
+      const data = await fetchEvents();
+      if (!cancelled && data !== null) setEvents(data);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [entityState, fetchEvents]);
 
   useEffect(() => {
-    const id = setInterval(fetchEvents, 5 * 60_000);
+    const id = setInterval(async () => {
+      const data = await fetchEvents();
+      if (data !== null) setEvents(data);
+    }, 5 * 60_000);
     return () => clearInterval(id);
   }, [fetchEvents]);
 

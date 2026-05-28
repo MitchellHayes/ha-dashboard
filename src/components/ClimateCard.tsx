@@ -2,7 +2,7 @@ import { useEntity } from '@hakit/core';
 import { RefreshCw, Flame, Snowflake, Minus, Plus } from 'lucide-react';
 
 type HvacMode = 'heat_cool' | 'heat' | 'cool' | 'off';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type AnyService = (args: Record<string, unknown>) => void;
 
 const MODES: { id: HvacMode; label: string; icon?: React.ReactNode }[] = [

@@ -177,7 +177,6 @@ export function MediaCard() {
     player?.service.volumeSet({ serviceData: { volume_level: Number(e.target.value) / 100 } });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type AnyService = (args: Record<string, unknown>) => void;
 
   function playPinned(pinned: Pinned) {
