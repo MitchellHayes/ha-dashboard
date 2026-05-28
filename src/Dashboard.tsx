@@ -1,17 +1,13 @@
-import { useState } from 'react';
 import { useHass } from '@hakit/core';
 import { NowStrip } from './components/NowStrip';
 import { ForecastCard } from './components/ForecastCard';
 import { TabbedListCard } from './components/TabbedListCard';
 import { ActivityCard } from './components/ActivityCard';
 import { HouseOverview } from './components/HouseOverview';
-import { TimerCard } from './components/TimerCard';
+import { AlarmCard } from './components/AlarmCard';
 import { MediaCard } from './components/MediaCard';
-import { QuickActionsBar } from './components/QuickActionsBar';
-import { AlarmPanel } from './components/AlarmPanel';
-function Dashboard() {
-  const [alarmOpen, setAlarmOpen] = useState(false);
 
+function Dashboard() {
   const sunState = useHass(s => (s.entities as Record<string, { state: string }>)['sun.sun']?.state);
   const theme = sunState === 'above_horizon' ? 'light' : 'hc';
 
@@ -31,15 +27,11 @@ function Dashboard() {
             <HouseOverview />
 
             <div className='col'>
-              <TimerCard />
+              <AlarmCard />
               <MediaCard />
             </div>
           </div>
-
-          <QuickActionsBar onAlarmOpen={() => setAlarmOpen(true)} />
         </div>
-
-        <AlarmPanel open={alarmOpen} onClose={() => setAlarmOpen(false)} />
       </div>
     </div>
   );

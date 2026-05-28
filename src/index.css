@@ -89,7 +89,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   height: 100%;
   padding: clamp(14px, 1.15vw, 22px);
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) clamp(64px, 8.1vh, 88px);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: clamp(10px, 0.83vw, 16px);
   overflow: hidden;
 }
