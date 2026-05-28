@@ -31,6 +31,7 @@ function WeatherIcon({ condition, size = 48 }: { condition: string; size?: numbe
 }
 
 function fmtEventTime(isoStr: string) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) return 'All day';
   const d = new Date(isoStr);
   let h = d.getHours();
   const m = d.getMinutes();

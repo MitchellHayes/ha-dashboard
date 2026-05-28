@@ -1,5 +1,6 @@
 import { useEntity } from '@hakit/core';
 import { DoorOpen, Move, User, Shield, Lightbulb } from 'lucide-react';
+import { useNow } from '../hooks/useNow';
 
 interface ActivityEntry {
   icon: React.ReactNode;
@@ -8,8 +9,8 @@ interface ActivityEntry {
   lastChanged: Date;
 }
 
-function relTime(d: Date): string {
-  const diffMs = Date.now() - d.getTime();
+function relTime(d: Date, now: Date): string {
+  const diffMs = now.getTime() - d.getTime();
   const mins = Math.floor(diffMs / 60_000);
   if (mins < 1) return 'now';
   if (mins < 60) return `${mins}m`;
@@ -27,6 +28,7 @@ function alarmLabel(state: string): string {
 }
 
 export function ActivityCard() {
+  const now = useNow();
   const frontDoor = useEntity('binary_sensor.front_door_entry');
   const backDoor = useEntity('binary_sensor.back_door_entry');
   const kitchenMotion = useEntity('binary_sensor.kitchen_motion');
@@ -58,19 +60,19 @@ export function ActivityCard() {
     },
     {
       icon: <Move size={13} />,
-      text: 'Motion detected',
+      text: kitchenMotion.state === 'on' ? 'Motion detected' : 'Motion cleared',
       where: 'Kitchen',
       lastChanged: new Date(kitchenMotion.last_changed ?? 0),
     },
     {
       icon: <Move size={13} />,
-      text: 'Motion detected',
+      text: masterMotion.state === 'on' ? 'Motion detected' : 'Motion cleared',
       where: 'Master bedroom',
       lastChanged: new Date(masterMotion.last_changed ?? 0),
     },
     {
       icon: <Move size={13} />,
-      text: 'Motion detected',
+      text: gameMotion.state === 'on' ? 'Motion detected' : 'Motion cleared',
       where: 'Game room',
       lastChanged: new Date(gameMotion.last_changed ?? 0),
     },
@@ -175,7 +177,7 @@ export function ActivityCard() {
                 <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{e.where}</span>
               </div>
               <span className='mono' style={{ fontSize: 13, color: 'var(--text-3)', flexShrink: 0 }}>
-                {relTime(e.lastChanged)}
+                {relTime(e.lastChanged, now)}
               </span>
             </div>
           ))
