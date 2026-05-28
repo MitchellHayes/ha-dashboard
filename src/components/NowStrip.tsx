@@ -1,10 +1,11 @@
 import { useEntity } from '@hakit/core';
 import { useWeather } from '@hakit/core';
-import { Sun, Cloud, CloudRain, CloudSun, CloudSnow, CloudLightning, Sunset } from 'lucide-react';
+import { Sun, Cloud, CloudRain, CloudSun, CloudSnow, CloudLightning } from 'lucide-react';
 import { useNow } from '../hooks/useNow';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
+import { useHassPhoto } from '../hooks/useHassPhoto';
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function pad2(n: number) {
@@ -19,18 +20,7 @@ function fmtTime(d: Date) {
   return { h, m: pad2(m), ampm };
 }
 
-function WeatherIcon({ condition, size = 48 }: { condition: string; size?: number }) {
-  const c = condition?.toLowerCase() ?? '';
-  const props = { size, color: 'var(--accent)', strokeWidth: 1.3 };
-  if (c.includes('thunder') || c.includes('lightning')) return <CloudLightning {...props} />;
-  if (c.includes('snow') || c.includes('sleet') || c.includes('hail')) return <CloudSnow {...props} />;
-  if (c.includes('rain') || c.includes('drizzle') || c.includes('shower')) return <CloudRain {...props} />;
-  if (c.includes('cloudy') || c.includes('overcast')) return <Cloud {...props} />;
-  if (c.includes('partly') || c.includes('mostly clear') || c.includes('few clouds')) return <CloudSun {...props} />;
-  return <Sun {...props} />;
-}
-
-function fmtEventTime(isoStr: string) {
+function fmtEventTime(isoStr: string): string {
   if (/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) return 'All day';
   const d = new Date(isoStr);
   let h = d.getHours();
@@ -40,75 +30,108 @@ function fmtEventTime(isoStr: string) {
   return m === 0 ? `${h}${ampm}` : `${h}:${pad2(m)}${ampm}`;
 }
 
-const PEOPLE = [
-  { entity: 'person.mitchell' as const, name: 'Mitchell', initial: 'MT' },
-  { entity: 'person.michelle' as const, name: 'Michelle', initial: 'ML' },
-  { entity: 'person.ryan' as const, name: 'Ryan', initial: 'R' },
-];
+function relFromNow(isoStr: string, now: Date): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) return '';
+  const diffMin = Math.round((new Date(isoStr).getTime() - now.getTime()) / 60_000);
+  if (Math.abs(diffMin) <= 1) return 'starting now';
+  if (diffMin > 0 && diffMin <= 60) return `in ${diffMin} min`;
+  if (diffMin > 60 && diffMin <= 1440) return `in ${Math.round(diffMin / 60)} hr`;
+  if (diffMin > 1440 && diffMin <= 2880) return 'tomorrow';
+  if (diffMin > 2880) return `in ${Math.round(diffMin / 1440)} days`;
+  return '';
+}
 
-function PresenceBlock() {
-  const mitchell = useEntity('person.mitchell');
-  const michelle = useEntity('person.michelle');
-  const ryan = useEntity('person.ryan');
-  const events = useCalendarEvents('calendar.family_calendar');
+function locStr(state: string): string {
+  if (state === 'home') return '';
+  if (!state || state === 'not_home') return 'Away';
+  return `At ${state.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}`;
+}
 
-  const states = [
-    { ...PEOPLE[0], home: mitchell.state === 'home' },
-    { ...PEOPLE[1], home: michelle.state === 'home' },
-    { ...PEOPLE[2], home: ryan.state === 'home' },
-  ];
-  const home = states.filter(p => p.home);
-  const away = states.filter(p => !p.home);
-  const next = events[0];
+function WeatherIcon({ condition, size = 48 }: { condition: string; size?: number }) {
+  const c = condition?.toLowerCase() ?? '';
+  const p = { size, color: 'var(--accent)', strokeWidth: 1.3 };
+  if (c.includes('thunder') || c.includes('lightning')) return <CloudLightning {...p} />;
+  if (c.includes('snow') || c.includes('sleet') || c.includes('hail')) return <CloudSnow {...p} />;
+  if (c.includes('rain') || c.includes('drizzle') || c.includes('shower')) return <CloudRain {...p} />;
+  if (c.includes('cloudy') || c.includes('overcast')) return <Cloud {...p} />;
+  if (c.includes('partly') || c.includes('mostly clear') || c.includes('few clouds')) return <CloudSun {...p} />;
+  return <Sun {...p} />;
+}
 
+function Stat({ label, value, first }: { label: string; value: string; first?: boolean }) {
   return (
     <div
-      style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '0 28px', flex: 1, gap: 12 }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        padding: first ? '0 14px 0 0' : '0 14px',
+        minWidth: 64,
+        borderLeft: first ? undefined : '1px solid var(--border)',
+      }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <span className='label' style={{ width: 44, flexShrink: 0 }}>
-          Home
-        </span>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          {home.map(p => (
-            <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: '50%',
-                  background: 'var(--accent-dim)',
-                  color: 'var(--accent-2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  border: '1px solid rgba(245,166,35,0.25)',
-                  flexShrink: 0,
-                }}
-              >
-                {p.initial}
-              </div>
-              <span style={{ fontSize: 16, fontWeight: 500 }}>{p.name}</span>
-            </div>
-          ))}
-          {away.length > 0 && <span style={{ fontSize: 15, color: 'var(--text-3)' }}>· {away.map(p => p.name).join(', ')} away</span>}
-        </div>
+      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--text-3)' }}>
+        {label}
+      </span>
+      <span className='mono' style={{ fontSize: 16, fontWeight: 400, letterSpacing: '-0.01em', lineHeight: 1 }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function PersonTile({ name, initial, picturePath, state }: { name: string; initial: string; picturePath?: string; state: string }) {
+  const photoUrl = useHassPhoto(picturePath);
+  const home = state === 'home';
+  const loc = locStr(state);
+
+  return (
+    <div style={{ display: 'grid', gridTemplateRows: 'auto 20px 16px', justifyItems: 'center', rowGap: 6, minWidth: 88 }}>
+      {/* Avatar */}
+      <div
+        style={{
+          width: 88,
+          height: 88,
+          borderRadius: '50%',
+          backgroundImage: photoUrl
+            ? `url(${photoUrl})`
+            : home
+              ? 'linear-gradient(135deg, var(--accent-dim), rgba(255,191,71,0.06))'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          color: home ? 'var(--accent-2)' : 'var(--text-3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 28,
+          fontWeight: 500,
+          border: `2px solid ${home ? 'rgba(255,191,71,0.35)' : 'rgba(255,255,255,0.20)'}`,
+          position: 'relative' as const,
+          flexShrink: 0,
+          filter: !home ? 'saturate(0.4)' : undefined,
+          opacity: !home ? 0.65 : undefined,
+        }}
+      >
+        {!photoUrl && initial}
+        {/* Status badge */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 2,
+            right: 2,
+            width: 18,
+            height: 18,
+            borderRadius: '50%',
+            border: '3px solid var(--card)',
+            background: home ? 'var(--ok)' : 'var(--text-4)',
+          }}
+        />
       </div>
-      {next && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span className='label' style={{ width: 44, flexShrink: 0 }}>
-            Next
-          </span>
-          <span className='mono' style={{ fontSize: 15, fontWeight: 500, color: 'var(--accent-2)', width: 52, flexShrink: 0 }}>
-            {fmtEventTime(next.start)}
-          </span>
-          <span style={{ fontSize: 15, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {next.summary}
-          </span>
-        </div>
-      )}
+      {/* Name */}
+      <span style={{ fontSize: 16, fontWeight: 500, color: home ? 'var(--text)' : 'var(--text-2)', textAlign: 'center' }}>{name}</span>
+      {/* Location */}
+      <span style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center' }}>{loc || ' '}</span>
     </div>
   );
 }
@@ -120,10 +143,10 @@ function WeatherBlock() {
   const temp = Math.round((weather.attributes?.temperature as number) ?? 0);
   const condition = weather.state ?? '';
   const forecast = weather.forecast?.forecast ?? [];
-  const hi = forecast[0] ? Math.round(forecast[0].temperature) : '—';
-  const lo = forecast[0] && 'templow' in forecast[0] ? Math.round((forecast[0] as { templow: number }).templow) : '—';
+  const hi = forecast[0] ? `${Math.round(forecast[0].temperature)}°` : '—';
+  const lo = forecast[0] && 'templow' in forecast[0] ? `${Math.round((forecast[0] as { templow: number }).templow)}°` : '—';
 
-  let sunsetStr = '';
+  let sunsetStr = '—';
   if (sunSetting?.state && sunSetting.state !== 'unavailable' && sunSetting.state !== 'unknown') {
     const d = new Date(sunSetting.state);
     let h = d.getHours();
@@ -139,35 +162,112 @@ function WeatherBlock() {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        height: '100%',
-        padding: '0 28px',
-        borderRight: '1px solid var(--border)',
-        gap: 4,
+        padding: '20px 32px',
+        borderLeft: '1px solid var(--border)',
+        gap: 12,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+      {/* Hero */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <WeatherIcon condition={condition} size={56} />
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <span className='mono' style={{ fontSize: 'var(--sz-weather-temp)', fontWeight: 300, letterSpacing: '-0.03em', lineHeight: 0.9 }}>
-            {temp}
-          </span>
-          <span style={{ fontSize: 'clamp(18px, 1.46vw, 28px)', color: 'var(--text-2)', fontWeight: 300 }}>°F</span>
+        <div>
+          <div
+            className='mono'
+            style={{ fontSize: 'var(--sz-weather-temp)', fontWeight: 300, letterSpacing: '-0.035em', lineHeight: 0.85 }}
+          >
+            {temp}°
+          </div>
+          <div style={{ fontSize: 15, color: 'var(--text-2)', marginTop: 4, textTransform: 'capitalize' }}>{condition}</div>
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 15, color: 'var(--text-2)' }}>
-        <span style={{ fontWeight: 500, color: 'var(--text)', textTransform: 'capitalize' }}>{condition}</span>
-        <span style={{ color: 'var(--text-3)' }}>·</span>
-        <span>H {hi}°</span>
-        <span>L {lo}°</span>
-        {sunsetStr && (
-          <>
-            <span style={{ color: 'var(--text-3)' }}>·</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <Sunset size={14} strokeWidth={1.5} /> {sunsetStr}
-            </span>
-          </>
-        )}
+      {/* Stats */}
+      <div style={{ display: 'flex', paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+        <Stat label='Hi' value={hi} first />
+        <Stat label='Lo' value={lo} />
+        <Stat label='Sunset' value={sunsetStr} />
       </div>
+    </div>
+  );
+}
+
+function PresenceBlock() {
+  const mitchell = useEntity('person.mitchell');
+  const michelle = useEntity('person.michelle');
+  const ryan = useEntity('person.ryan');
+  const takumi = useEntity('device_tracker.takumi_tracker');
+  const events = useCalendarEvents('calendar.family_calendar');
+  const now = useNow();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ep = (e: { attributes: unknown }) => (e.attributes as any)?.entity_picture as string | undefined;
+
+  const people = [
+    { name: 'Mitchell', initial: 'M', picturePath: ep(mitchell), state: mitchell.state ?? '' },
+    { name: 'Michelle', initial: 'M', picturePath: ep(michelle), state: michelle.state ?? '' },
+    { name: 'Ryan', initial: 'R', picturePath: ep(ryan), state: ryan.state ?? '' },
+    { name: 'Takumi', initial: 'T', picturePath: ep(takumi), state: takumi.state ?? '' },
+  ];
+
+  const next = events[0];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const nextLoc = next ? ((next as any).location as string | undefined) : undefined;
+  const relTime = next ? relFromNow(next.start, now) : '';
+  const metaParts = [nextLoc, relTime].filter(Boolean) as string[];
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '18px 28px',
+        borderLeft: '1px solid var(--border)',
+        flex: 1,
+        gap: 32,
+      }}
+    >
+      {/* Person tiles */}
+      <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
+        {people.map(p => (
+          <PersonTile key={p.name} {...p} />
+        ))}
+      </div>
+
+      {/* Next-up */}
+      {next && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            padding: '14px 22px',
+            borderLeft: '1px solid var(--border)',
+            alignSelf: 'stretch',
+            minWidth: 280,
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, flexShrink: 0 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--text-3)' }}>
+              Next
+            </span>
+            <span
+              className='mono'
+              style={{ fontSize: 32, fontWeight: 400, letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--accent-2)' }}
+            >
+              {fmtEventTime(next.start)}
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+            <span
+              style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            >
+              {next.summary}
+            </span>
+            {metaParts.length > 0 && <span style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.3 }}>{metaParts.join(' · ')}</span>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -177,35 +277,36 @@ export function NowStrip() {
   const t = fmtTime(now);
 
   return (
-    <div className='card' style={{ padding: 0, flexDirection: 'row', alignItems: 'stretch' }}>
-      {/* Clock */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          height: '100%',
-          padding: '0 28px',
-          borderRight: '1px solid var(--border)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-          <span className='mono' style={{ fontSize: 'var(--sz-clock)', fontWeight: 300, letterSpacing: '-0.04em', lineHeight: 0.9 }}>
+    <div
+      className='card'
+      style={{
+        padding: 0,
+        display: 'grid',
+        gridTemplateColumns: 'auto auto 1fr',
+        alignItems: 'stretch',
+        overflow: 'visible',
+      }}
+    >
+      {/* Clock block */}
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px 32px', gap: 12 }}>
+        <div>
+          <span className='mono' style={{ fontSize: 'var(--sz-clock)', fontWeight: 300, letterSpacing: '-0.045em', lineHeight: 0.85 }}>
             {t.h}
             <span style={{ color: 'var(--text-3)' }}>:</span>
             {t.m}
           </span>
-          <span style={{ fontSize: 'clamp(14px, 1.15vw, 22px)', color: 'var(--text-2)', fontWeight: 500 }}>{t.ampm}</span>
+          <span style={{ fontSize: 'clamp(14px, 1.15vw, 22px)', color: 'var(--text-2)', fontWeight: 500, marginLeft: 8 }}>{t.ampm}</span>
         </div>
-        <div style={{ marginTop: 8, fontSize: 'clamp(13px, 0.94vw, 18px)', color: 'var(--text-2)', fontWeight: 500 }}>
-          {DAYS[now.getDay()]} <span style={{ color: 'var(--text-3)' }}>·</span> {MONTHS[now.getMonth()]} {now.getDate()}
+        <div style={{ display: 'flex', paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+          <Stat label='Day' value={DAYS_LONG[now.getDay()]} first />
+          <Stat label='Date' value={`${MONTHS[now.getMonth()]} ${now.getDate()}`} />
         </div>
       </div>
 
-      {/* Weather */}
+      {/* Weather block */}
       <WeatherBlock />
 
-      {/* Presence + Next */}
+      {/* Presence + Next block */}
       <PresenceBlock />
     </div>
   );
