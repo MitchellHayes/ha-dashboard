@@ -44,7 +44,7 @@ export function RoomCard({ room }: { room: RoomConfig }) {
     returnNullIfNotFound: true,
   });
 
-  const temp = parseFloat(tempEnt?.state ?? '0');
+  const temp = parseFloat(tempEnt?.state ?? '');
   const isLightOn = lightEnt?.state === 'on';
   const brightness = isLightOn ? Math.round((((lightEnt?.attributes?.brightness as number) ?? 255) / 255) * 100) : 0;
   const occupied = room.motionEntity ? motionEnt?.state === 'on' : false;
@@ -58,7 +58,7 @@ export function RoomCard({ room }: { room: RoomConfig }) {
     lightEnt?.service.toggle();
   }
 
-  const tempStr = isNaN(temp) || temp === 0 ? '—' : temp.toFixed(1);
+  const tempStr = isNaN(temp) ? '—' : temp.toFixed(1);
 
   return (
     <div className={`room${occupied ? ' occupied' : ''}`}>

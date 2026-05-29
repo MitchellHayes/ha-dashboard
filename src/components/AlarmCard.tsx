@@ -157,7 +157,7 @@ function ArmButton({ label, targetState, currentState, onClick }: ArmButtonProps
         borderRadius: 14,
         background: isCurrent ? tone : 'var(--card-2)',
         border: `1px solid ${isCurrent ? tone : 'var(--border)'}`,
-        color: isCurrent ? '#0a0a0a' : 'var(--text)',
+        color: isCurrent ? 'var(--accent-fg)' : 'var(--text)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

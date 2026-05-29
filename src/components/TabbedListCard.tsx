@@ -31,7 +31,8 @@ function fmtEventDate(isoStr: string): string | null {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const eventDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const diffDays = Math.round((eventDay.getTime() - today.getTime()) / 86_400_000);
-  if (diffDays <= 0) return null;
+  if (diffDays < 0) return null;
+  if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Tomorrow';
   if (diffDays <= 6) return WEEKDAYS[d.getDay()];
   return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
@@ -71,7 +72,7 @@ function WeatherIcon({ condition, size = 20 }: { condition: string; size?: numbe
   const c = condition?.toLowerCase() ?? '';
   const props = { size, color: 'var(--accent)', strokeWidth: 1.4 };
   if (c.includes('thunder') || c.includes('lightning')) return <CloudLightning {...props} />;
-  if (c.includes('snow') || c.includes('sleet')) return <CloudSnow {...props} />;
+  if (c.includes('snow') || c.includes('sleet') || c.includes('hail')) return <CloudSnow {...props} />;
   if (c.includes('rain') || c.includes('drizzle') || c.includes('shower') || c.includes('pouring')) return <CloudRain {...props} />;
   if (c.includes('cloudy') || c.includes('overcast')) return <Cloud {...props} />;
   if (c.includes('partly') || c.includes('mostly clear') || c.includes('few')) return <CloudSun {...props} />;
@@ -112,19 +113,19 @@ export function TabbedListCard() {
   const raw = weather.forecast?.forecast ?? [];
   const days = raw.slice(0, 7).map((f, i) => {
     const date = new Date(f.datetime);
-    const lo = 'templow' in f ? (f as { templow: number }).templow : Math.round(f.temperature - 12);
+    const lo = 'templow' in f ? Math.round((f as { templow: number }).templow) : null;
     return {
       label: i === 0 ? 'Today' : WEEKDAYS[date.getDay()],
       condition: f.condition ?? '',
       hi: Math.round(f.temperature),
-      lo: Math.round(lo as number),
+      lo,
       isToday: i === 0,
     };
   });
 
-  const allTemps = days.flatMap(d => [d.hi, d.lo]);
-  const minT = Math.min(...allTemps, 30);
-  const maxT = Math.max(...allTemps, 100);
+  const allTemps = days.flatMap(d => (d.lo !== null ? [d.hi, d.lo] : [d.hi]));
+  const minT = Math.min(...allTemps);
+  const maxT = Math.max(...allTemps);
   const range = maxT - minT || 1;
 
   return (
@@ -192,7 +193,7 @@ export function TabbedListCard() {
                         style={{
                           fontSize: 10,
                           fontWeight: 600,
-                          color: 'var(--text-4)',
+                          color: 'var(--text-3)',
                           textTransform: 'uppercase',
                           letterSpacing: '0.06em',
                         }}
@@ -274,20 +275,22 @@ export function TabbedListCard() {
                   <WeatherIcon condition={d.condition} size={22} />
                 </span>
                 <div style={{ height: 6, borderRadius: 3, background: 'var(--track)', position: 'relative' }}>
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: `${((d.lo - minT) / range) * 100}%`,
-                      width: `${((d.hi - d.lo) / range) * 100}%`,
-                      top: 0,
-                      bottom: 0,
-                      borderRadius: 3,
-                      background: 'linear-gradient(90deg, var(--cool), var(--accent))',
-                    }}
-                  />
+                  {d.lo !== null && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: `${((d.lo - minT) / range) * 100}%`,
+                        width: `${((d.hi - d.lo) / range) * 100}%`,
+                        top: 0,
+                        bottom: 0,
+                        borderRadius: 3,
+                        background: 'linear-gradient(90deg, var(--cool), var(--accent))',
+                      }}
+                    />
+                  )}
                 </div>
                 <span className='mono' style={{ fontSize: 15, color: 'var(--text)', whiteSpace: 'nowrap' }}>
-                  {d.hi}° <span style={{ color: 'var(--text-3)' }}>/ {d.lo}°</span>
+                  {d.hi}°{d.lo !== null && <span style={{ color: 'var(--text-3)' }}> / {d.lo}°</span>}
                 </span>
               </div>
             ))}

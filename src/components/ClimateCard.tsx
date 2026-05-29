@@ -142,7 +142,7 @@ export function ClimateCard() {
                 padding: '9px 6px',
                 borderRadius: 9,
                 background: isActive ? 'var(--accent)' : 'transparent',
-                color: isActive ? '#1a1100' : id === 'off' ? 'var(--text-3)' : 'var(--text-2)',
+                color: isActive ? 'var(--accent-fg)' : 'var(--text-2)',
                 fontSize: 13,
                 fontWeight: isActive ? 600 : 500,
                 display: 'inline-flex',

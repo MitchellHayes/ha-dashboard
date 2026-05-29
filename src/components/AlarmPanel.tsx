@@ -39,7 +39,7 @@ function ArmButton({ label, targetState, currentState, onClick }: ArmButtonProps
         borderRadius: 16,
         background: isCurrent ? tone : 'var(--card-2)',
         border: `1px solid ${isCurrent ? tone : 'var(--border-2)'}`,
-        color: isCurrent ? '#0a0a0a' : 'var(--text)',
+        color: isCurrent ? 'var(--accent-fg)' : 'var(--text)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -108,7 +108,7 @@ export function AlarmPanel({ open, onClose }: AlarmPanelProps) {
     <div
       onClick={onClose}
       style={{
-        position: 'absolute',
+        position: 'fixed',
         inset: 0,
         zIndex: 100,
         background: 'rgba(0,0,0,0.65)',

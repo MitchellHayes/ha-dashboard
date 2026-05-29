@@ -10,6 +10,7 @@ export function useHassPhoto(entityPicturePath: string | null | undefined): stri
     if (/^https?:\/\//.test(entityPicturePath)) return entityPicturePath;
     if (!hassUrl || !auth) return '';
     const base = hassUrl.replace(/\/$/, '');
-    return `${base}${entityPicturePath}?access_token=${auth.data.access_token}`;
+    const sep = entityPicturePath.includes('?') ? '&' : '?';
+    return `${base}${entityPicturePath}${sep}access_token=${auth.data.access_token}`;
   }, [entityPicturePath, hassUrl, auth]);
 }

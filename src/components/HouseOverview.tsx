@@ -16,7 +16,7 @@ const ROOMS: RoomConfig[] = [
     motionEntity: 'binary_sensor.kitchen_motion',
     lightEntity: 'light.kitchen_and_dining_room_lights',
     lightCount: 3,
-    mediaEntity: 'media_player.kitchen_speaker',
+    mediaEntity: 'media_player.kitchen_speaker_2',
   },
   {
     name: 'Master Bedroom',

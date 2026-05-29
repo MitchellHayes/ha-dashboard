@@ -38,7 +38,8 @@ function fmtEventDate(isoStr: string): string | null {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const eventDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const diffDays = Math.round((eventDay.getTime() - today.getTime()) / 86_400_000);
-  if (diffDays <= 0) return null;
+  if (diffDays < 0) return null;
+  if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Tomorrow';
   if (diffDays <= 6) return DAYS_SHORT[d.getDay()];
   return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
@@ -66,7 +67,7 @@ function WeatherIcon({ condition, size = 48 }: { condition: string; size?: numbe
   const p = { size, color: 'var(--accent)', strokeWidth: 1.3 };
   if (c.includes('thunder') || c.includes('lightning')) return <CloudLightning {...p} />;
   if (c.includes('snow') || c.includes('sleet') || c.includes('hail')) return <CloudSnow {...p} />;
-  if (c.includes('rain') || c.includes('drizzle') || c.includes('shower')) return <CloudRain {...p} />;
+  if (c.includes('rain') || c.includes('drizzle') || c.includes('shower') || c.includes('pouring')) return <CloudRain {...p} />;
   if (c.includes('cloudy') || c.includes('overcast')) return <Cloud {...p} />;
   if (c.includes('partly') || c.includes('mostly clear') || c.includes('few clouds')) return <CloudSun {...p} />;
   return <Sun {...p} />;
@@ -111,7 +112,7 @@ function PersonTile({ name, initial, picturePath, state }: { name: string; initi
             ? `url(${photoUrl})`
             : home
               ? 'linear-gradient(135deg, var(--accent-dim), rgba(255,191,71,0.06))'
-              : 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))',
+              : 'linear-gradient(135deg, var(--card-2), var(--card))',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           color: home ? 'var(--accent-2)' : 'var(--text-3)',
@@ -120,7 +121,7 @@ function PersonTile({ name, initial, picturePath, state }: { name: string; initi
           justifyContent: 'center',
           fontSize: 24,
           fontWeight: 500,
-          border: `2px solid ${home ? 'rgba(255,191,71,0.35)' : 'rgba(255,255,255,0.20)'}`,
+          border: `2px solid ${home ? 'var(--ring-accent)' : 'var(--border-2)'}`,
           position: 'relative' as const,
           flexShrink: 0,
           filter: !home ? 'saturate(0.4)' : undefined,

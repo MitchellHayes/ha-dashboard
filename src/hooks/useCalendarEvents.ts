@@ -16,6 +16,7 @@ export function useCalendarEvents(entityId: string) {
 
   const fetchEvents = useCallback(async (): Promise<CalendarEvent[] | null> => {
     const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const endOfDay = new Date(now);
     endOfDay.setDate(endOfDay.getDate() + 7);
 
@@ -25,7 +26,7 @@ export function useCalendarEvents(entityId: string) {
         service: 'getEvents',
         target: { entity_id: entityId },
         serviceData: {
-          start_date_time: now.toISOString(),
+          start_date_time: startOfDay.toISOString(),
           end_date_time: endOfDay.toISOString(),
         },
         returnResponse: true,

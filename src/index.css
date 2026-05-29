@@ -16,8 +16,10 @@
   --text-4: #7e8694;   /* 3.6:1 graphical */
 
   --accent: #ffbf47;
+  --accent-fg: #1a1100;  /* text on --accent bg — 17:1 in dark, overridden to #fff in light */
   --accent-2: #ffd57a;
   --accent-dim: rgba(255,191,71,0.18);
+  --ring-accent: rgba(255,191,71,0.35);
 
   --ok: #6bbf75;
   --info: #5a9bff;
@@ -34,7 +36,7 @@
   --sz-room-temp: clamp(37px, 3.1vw, 60px);
 
   /* Track color for progress bars / timer ring back — ≥3:1 on --card */
-  --track: rgba(255,255,255,0.16);
+  --track: rgba(255,255,255,0.28);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -125,7 +127,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .ibtn:hover { background: rgba(255,255,255,0.10); }
 .ibtn:active { transform: scale(0.94); }
-.ibtn.primary { background: var(--accent); color: #1a1100; width: 64px; height: 64px; }
+.ibtn.primary { background: var(--accent); color: var(--accent-fg); width: 64px; height: 64px; }
 .ibtn.primary:hover { background: var(--accent-2); }
 .ibtn.sm { width: 40px; height: 40px; }
 
@@ -151,7 +153,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .switch { width: 56px; height: 32px; border-radius: 999px; background: rgba(255,255,255,0.10); position: relative; transition: background 150ms; flex-shrink: 0; }
 .switch::after { content: ''; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: left 150ms; }
 .switch.on { background: var(--accent); }
-.switch.on::after { left: 28px; background: #1a1100; }
+.switch.on::after { left: 28px; background: var(--accent-fg); }
 
 /* Room tile */
 .room {
@@ -189,14 +191,16 @@ button:focus-visible, .room:focus-visible { outline: 2px solid var(--accent); ou
   --text-4: #918878;   /* 3.5:1 graphical */
 
   --accent: #9b5b04;   /* 5.4:1 on white */
+  --accent-fg: #ffffff; /* text on --accent bg — 6.9:1 in light */
   --accent-2: #7a4500;
   --accent-dim: rgba(155,91,4,0.16);
+  --ring-accent: rgba(155,91,4,0.45);
   --ok: #25762f;
   --info: #1f56a8;
   --alert: #b6362a;
   --cool: #1f56a8;
 
-  --track: rgba(20,16,8,0.30); /* 3:1 on white */
+  --track: rgba(20,16,8,0.50); /* 3.6:1 on white */
 }
 
 .pulse-screen[data-theme="light"] {
@@ -231,11 +235,14 @@ button:focus-visible, .room:focus-visible { outline: 2px solid var(--accent); ou
   background: #ffffff;
   box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.08);
 }
+.pulse-screen[data-theme="light"] .switch.on { background: var(--accent); }
 .pulse-screen[data-theme="light"] .switch.on::after { background: #ffffff; }
 
 /* Buttons */
 .pulse-screen[data-theme="light"] .ibtn { background: rgba(20,16,8,0.06); }
 .pulse-screen[data-theme="light"] .ibtn:hover { background: rgba(20,16,8,0.12); }
+.pulse-screen[data-theme="light"] .ibtn.primary { background: var(--accent); }
+.pulse-screen[data-theme="light"] .ibtn.primary:hover { background: var(--accent-2); }
 
 /* Slider */
 .pulse-screen[data-theme="light"] .slider::-webkit-slider-thumb,
@@ -250,5 +257,6 @@ button:focus-visible, .room:focus-visible { outline: 2px solid var(--accent); ou
   background: linear-gradient(to right, var(--accent) var(--p, 50%), #8a8273 var(--p, 50%));
 }
 
-/* Status dot off-state */
-.pulse-screen[data-theme="light"] .dot { background: #b8b1a2; }
+/* Status dot off-state — #8a8273 = 3.8:1 on white (passes 3:1 graphical) */
+.pulse-screen[data-theme="light"] .dot { background: #8a8273; }
+.pulse-screen[data-theme="light"] .dot.on { box-shadow: 0 0 12px rgba(155,91,4,0.45); }
