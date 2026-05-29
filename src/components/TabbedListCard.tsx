@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { Square } from 'lucide-react';
-import { useTodoItems } from '../hooks/useTodoItems';
+import { useWeather } from '@hakit/core';
+import { Sun, Cloud, CloudRain, CloudSun, CloudSnow, CloudLightning } from 'lucide-react';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 
 function pad2(n: number) {
   return String(n).padStart(2, '0');
 }
 
-// Returns true if the string is a date-only value (all-day event)
 function isDateOnly(s: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s);
 }
@@ -25,7 +24,6 @@ function fmtEventTime(isoStr: string): string {
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-// Returns a date label if the event is not today, null if it is
 function fmtEventDate(isoStr: string): string | null {
   const raw = isDateOnly(isoStr) ? `${isoStr}T00:00:00` : isoStr;
   const d = new Date(raw);
@@ -45,6 +43,39 @@ function tagColor(summary: string) {
     return 'var(--ok)';
   if (s.includes('family') || s.includes('school') || s.includes('soccer') || s.includes('practice')) return 'var(--accent)';
   return 'var(--text-3)';
+}
+
+const CONDITION_LABELS: Record<string, string> = {
+  sunny: 'Sunny',
+  'clear-night': 'Clear',
+  partlycloudy: 'Partly Cloudy',
+  cloudy: 'Cloudy',
+  fog: 'Foggy',
+  rainy: 'Rainy',
+  pouring: 'Heavy Rain',
+  snowy: 'Snow',
+  'snowy-rainy': 'Wintry Mix',
+  lightning: 'Thunderstorm',
+  'lightning-rainy': 'T-Storms',
+  windy: 'Windy',
+  'windy-variant': 'Windy',
+  hail: 'Hail',
+  exceptional: 'Unusual',
+};
+
+function fmtCondition(c: string): string {
+  return CONDITION_LABELS[c] ?? c.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function WeatherIcon({ condition, size = 20 }: { condition: string; size?: number }) {
+  const c = condition?.toLowerCase() ?? '';
+  const props = { size, color: 'var(--accent)', strokeWidth: 1.4 };
+  if (c.includes('thunder') || c.includes('lightning')) return <CloudLightning {...props} />;
+  if (c.includes('snow') || c.includes('sleet')) return <CloudSnow {...props} />;
+  if (c.includes('rain') || c.includes('drizzle') || c.includes('shower') || c.includes('pouring')) return <CloudRain {...props} />;
+  if (c.includes('cloudy') || c.includes('overcast')) return <Cloud {...props} />;
+  if (c.includes('partly') || c.includes('mostly clear') || c.includes('few')) return <CloudSun {...props} />;
+  return <Sun {...props} />;
 }
 
 interface TabProps {
@@ -74,12 +105,27 @@ function Tab({ active, onClick, children }: TabProps) {
 }
 
 export function TabbedListCard() {
-  const [tab, setTab] = useState<'grocery' | 'today'>('today');
-  const { items: allItems, completeItem } = useTodoItems('todo.shopping_list');
+  const [tab, setTab] = useState<'calendar' | 'forecast'>('calendar');
   const events = useCalendarEvents('calendar.family_calendar');
+  const weather = useWeather('weather.openweathermap', { type: 'daily' });
 
-  const pending = allItems.filter(i => i.status === 'needs_action');
-  const meta = tab === 'grocery' ? `${pending.length} of ${allItems.length}` : `next 7 days`;
+  const raw = weather.forecast?.forecast ?? [];
+  const days = raw.slice(0, 7).map((f, i) => {
+    const date = new Date(f.datetime);
+    const lo = 'templow' in f ? (f as { templow: number }).templow : Math.round(f.temperature - 12);
+    return {
+      label: i === 0 ? 'Today' : WEEKDAYS[date.getDay()],
+      condition: f.condition ?? '',
+      hi: Math.round(f.temperature),
+      lo: Math.round(lo as number),
+      isToday: i === 0,
+    };
+  });
+
+  const allTemps = days.flatMap(d => [d.hi, d.lo]);
+  const minT = Math.min(...allTemps, 30);
+  const maxT = Math.max(...allTemps, 100);
+  const range = maxT - minT || 1;
 
   return (
     <div className='card grow' style={{ minHeight: 0, padding: 0 }}>
@@ -93,115 +139,159 @@ export function TabbedListCard() {
           gap: 4,
         }}
       >
-        <Tab active={tab === 'today'} onClick={() => setTab('today')}>
+        <Tab active={tab === 'calendar'} onClick={() => setTab('calendar')}>
           Calendar
         </Tab>
-        <Tab active={tab === 'grocery'} onClick={() => setTab('grocery')}>
-          Grocery
+        <Tab active={tab === 'forecast'} onClick={() => setTab('forecast')}>
+          Forecast
         </Tab>
         <div className='grow' />
         <span className='card-action mono' style={{ paddingBottom: 12, fontFamily: 'var(--mono)' }}>
-          {meta}
+          7 days
         </span>
       </div>
 
       {/* Content */}
-      <div className='grow' style={{ padding: '12px 20px 16px', display: 'flex', flexDirection: 'column', gap: 2, overflow: 'hidden' }}>
-        {tab === 'grocery' ? (
-          pending.length > 0 ? (
-            <>
-              {pending.slice(0, 6).map((item, i) => (
-                <button
-                  key={item.uid}
-                  onClick={() => completeItem(item.uid)}
+      <div
+        className='grow'
+        style={{
+          padding: '12px 20px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          overflow: tab === 'calendar' ? 'auto' : 'hidden',
+        }}
+      >
+        {tab === 'calendar' ? (
+          events.length > 0 ? (
+            events.slice(0, 10).map((e, i, arr) => {
+              const dateLabel = fmtEventDate(e.start);
+              return (
+                <div
+                  key={i}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 12,
-                    padding: '7px 0',
-                    textAlign: 'left',
-                    borderBottom: i < Math.min(pending.length, 6) - 1 ? '1px solid var(--border)' : 'none',
+                    padding: '8px 0',
+                    borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
                   }}
                 >
-                  <Square size={20} color='var(--text-3)' strokeWidth={1.5} style={{ flexShrink: 0 }} />
-                  <span style={{ fontSize: 16, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {item.summary}
+                  <div
+                    style={{
+                      width: 60,
+                      flexShrink: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      gap: 2,
+                    }}
+                  >
+                    {dateLabel && (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          color: 'var(--text-4)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.06em',
+                        }}
+                      >
+                        {dateLabel}
+                      </span>
+                    )}
+                    <span className='mono' style={{ fontSize: 15, fontWeight: 500, color: 'var(--accent-2)', lineHeight: 1.2 }}>
+                      {fmtEventTime(e.start)}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      width: 2,
+                      height: dateLabel ? 34 : 22,
+                      borderRadius: 1,
+                      background: tagColor(e.summary),
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 500,
+                      lineHeight: 1.3,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      flex: 1,
+                    }}
+                  >
+                    {e.summary}
                   </span>
-                </button>
-              ))}
-              {pending.length > 6 && (
-                <div style={{ fontSize: 13, color: 'var(--text-3)', padding: '6px 0 0', textAlign: 'center' }}>
-                  +{pending.length - 6} more
                 </div>
-              )}
-            </>
+              );
+            })
           ) : (
-            <div style={{ fontSize: 15, color: 'var(--text-3)', fontStyle: 'italic', padding: '8px 0' }}>
-              All caught up — nothing to pick up.
-            </div>
+            <div style={{ fontSize: 15, color: 'var(--text-3)', fontStyle: 'italic', padding: '8px 0' }}>Nothing coming up.</div>
           )
-        ) : events.length > 0 ? (
-          events.slice(0, 3).map((e, i, arr) => {
-            const dateLabel = fmtEventDate(e.start);
-            return (
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {days.map((d, i) => (
               <div
                 key={i}
                 style={{
-                  display: 'flex',
+                  display: 'grid',
+                  gridTemplateColumns: '84px 26px 1fr auto',
                   alignItems: 'center',
                   gap: 12,
-                  padding: '7px 0',
-                  borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
+                  padding: '10px 0',
+                  borderBottom: i < days.length - 1 ? '1px solid var(--border)' : 'none',
                 }}
               >
-                <div
-                  style={{
-                    width: 58,
-                    flexShrink: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    gap: 1,
-                  }}
-                >
-                  {dateLabel && (
-                    <span
-                      style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}
-                    >
-                      {dateLabel}
-                    </span>
-                  )}
-                  <span className='mono' style={{ fontSize: 15, fontWeight: 500, color: 'var(--accent-2)', lineHeight: 1.2 }}>
-                    {fmtEventTime(e.start)}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span
+                    style={{
+                      fontSize: 15,
+                      fontWeight: d.isToday ? 600 : 500,
+                      color: d.isToday ? 'var(--text)' : 'var(--text-2)',
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {d.label}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: 'var(--text-3)',
+                      lineHeight: 1.2,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {fmtCondition(d.condition)}
                   </span>
                 </div>
-                <div
-                  style={{
-                    width: 2,
-                    height: dateLabel ? 32 : 20,
-                    borderRadius: 1,
-                    background: tagColor(e.summary),
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 500,
-                    lineHeight: 1.3,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    flex: 1,
-                  }}
-                >
-                  {e.summary}
+                <span style={{ display: 'flex', alignItems: 'center' }}>
+                  <WeatherIcon condition={d.condition} size={22} />
+                </span>
+                <div style={{ height: 6, borderRadius: 3, background: 'var(--track)', position: 'relative' }}>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: `${((d.lo - minT) / range) * 100}%`,
+                      width: `${((d.hi - d.lo) / range) * 100}%`,
+                      top: 0,
+                      bottom: 0,
+                      borderRadius: 3,
+                      background: 'linear-gradient(90deg, var(--cool), var(--accent))',
+                    }}
+                  />
+                </div>
+                <span className='mono' style={{ fontSize: 15, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+                  {d.hi}° <span style={{ color: 'var(--text-3)' }}>/ {d.lo}°</span>
                 </span>
               </div>
-            );
-          })
-        ) : (
-          <div style={{ fontSize: 15, color: 'var(--text-3)', fontStyle: 'italic', padding: '8px 0' }}>Nothing coming up.</div>
+            ))}
+          </div>
         )}
       </div>
     </div>

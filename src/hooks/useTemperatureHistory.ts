@@ -1,28 +1,24 @@
 import { useEffect, useState } from 'react';
-
-function getHassAuth(): { hassUrl: string; token: string } | null {
-  const hassUrl = import.meta.env.VITE_HA_URL as string | undefined;
-  const token = import.meta.env.VITE_HA_TOKEN as string | undefined;
-  if (!hassUrl || !token) return null;
-  return { hassUrl: hassUrl.replace(/\/$/, ''), token };
-}
+import { useHass } from '@hakit/core';
 
 export function useTemperatureHistory(entityId: string): number[] {
   const [points, setPoints] = useState<number[]>([]);
+  const hassUrl = useHass(s => s.hassUrl);
+  const auth = useHass(s => s.auth);
 
   useEffect(() => {
     async function fetch24h() {
-      const auth = getHassAuth();
-      if (!auth) return;
+      if (!hassUrl || !auth) return;
 
+      const base = hassUrl.replace(/\/$/, '');
       const end = new Date();
       const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
       const url =
-        `${auth.hassUrl}/api/history/period/${start.toISOString()}` +
+        `${base}/api/history/period/${start.toISOString()}` +
         `?filter_entity_id=${entityId}&minimal_response=true&significant_changes_only=false&end_time=${end.toISOString()}`;
 
       try {
-        const res = await fetch(url, { headers: { Authorization: `Bearer ${auth.token}` } });
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${auth.data.access_token}` } });
         if (!res.ok) return;
         const data = (await res.json()) as { state: string; last_changed: string }[][];
         const raw = data?.[0] ?? [];
@@ -43,14 +39,14 @@ export function useTemperatureHistory(entityId: string): number[] {
         const range = max - min || 1;
         setPoints(sampled.map(v => (v - min) / range));
       } catch {
-        // silently leave sparkline empty
+        // leave sparkline empty on fetch failure
       }
     }
 
     void fetch24h();
     const id = setInterval(() => void fetch24h(), 5 * 60_000);
     return () => clearInterval(id);
-  }, [entityId]);
+  }, [entityId, hassUrl, auth]);
 
   return points;
 }

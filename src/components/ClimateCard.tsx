@@ -92,13 +92,24 @@ export function ClimateCard() {
                 fontWeight: 300,
                 letterSpacing: '-0.045em',
                 lineHeight: 0.9,
-                color: isOff ? 'var(--text-3)' : 'var(--accent-2)',
+                color: isOff ? 'var(--text-3)' : 'var(--text)',
               }}
             >
               {displayStr}
             </span>
             {!isOff && (
-              <span style={{ fontSize: 'clamp(22px, 1.67vw, 32px)', color: 'var(--accent-2)', fontWeight: 300, lineHeight: 1 }}>°</span>
+              <span
+                style={{
+                  fontSize: 'clamp(22px, 1.67vw, 32px)',
+                  color: 'var(--text-2)',
+                  fontWeight: 300,
+                  lineHeight: 1,
+                  alignSelf: 'flex-start',
+                  transform: 'translateY(6px)',
+                }}
+              >
+                °
+              </span>
             )}
           </div>
         </div>

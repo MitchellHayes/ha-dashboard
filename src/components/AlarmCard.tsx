@@ -1,18 +1,7 @@
 import { useState } from 'react';
-import { useEntity } from '@hakit/core';
+import { useEntity, useHass } from '@hakit/core';
 import { Shield, Unlock, ChevronRight, Camera } from 'lucide-react';
 import { AlarmPanel } from './AlarmPanel';
-
-function getHassUrl(): string {
-  try {
-    const raw = localStorage.getItem('hassTokens');
-    if (!raw) return '';
-    const parsed = JSON.parse(raw) as { hassUrl?: string };
-    return parsed.hassUrl?.replace(/\/$/, '') ?? '';
-  } catch {
-    return '';
-  }
-}
 
 function CameraButton({ name, onClick }: { name: string; onClick: () => void }) {
   return (
@@ -61,8 +50,9 @@ function CameraOverlay({ entityId, onClose }: { entityId: string; onClose: () =>
   const camera = useEntity(entityId as `camera.${string}`);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cameraToken = (camera?.attributes as any)?.access_token as string | undefined;
-  const hassUrl = getHassUrl();
-  const src = hassUrl && cameraToken ? `${hassUrl}/api/camera_proxy_stream/${entityId}?token=${cameraToken}` : '';
+  const hassUrl = useHass(s => s.hassUrl);
+  const base = hassUrl?.replace(/\/$/, '') ?? '';
+  const src = base && cameraToken ? `${base}/api/camera_proxy_stream/${entityId}?token=${cameraToken}` : '';
   const label = entityId.replace(/^camera\./, '').replace(/_/g, ' ');
 
   return (
@@ -150,13 +140,12 @@ function stateDotClass(s: string): string {
 
 interface ArmButtonProps {
   label: string;
-  sub: string;
   targetState: AlarmState;
   currentState: string;
   onClick: () => void;
 }
 
-function ArmButton({ label, sub, targetState, currentState, onClick }: ArmButtonProps) {
+function ArmButton({ label, targetState, currentState, onClick }: ArmButtonProps) {
   const isCurrent = currentState === targetState;
   const tone = targetState === 'armed_away' ? 'var(--alert)' : targetState === 'armed_home' ? 'var(--accent)' : 'var(--ok)';
   return (
@@ -179,7 +168,6 @@ function ArmButton({ label, sub, targetState, currentState, onClick }: ArmButton
     >
       {targetState === 'disarmed' ? <Unlock size={22} strokeWidth={1.5} /> : <Shield size={22} strokeWidth={1.5} />}
       <span style={{ fontSize: 14, fontWeight: 600 }}>{label}</span>
-      <span style={{ fontSize: 11, opacity: 0.7 }}>{sub}</span>
     </button>
   );
 }
@@ -206,21 +194,9 @@ export function AlarmCard() {
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <ArmButton label='Disarm' sub='off' targetState='disarmed' currentState={state} onClick={() => alarm?.service.alarmDisarm({})} />
-          <ArmButton
-            label='Stay'
-            sub='home'
-            targetState='armed_home'
-            currentState={state}
-            onClick={() => alarm?.service.alarmArmHome({})}
-          />
-          <ArmButton
-            label='Away'
-            sub='full'
-            targetState='armed_away'
-            currentState={state}
-            onClick={() => alarm?.service.alarmArmAway({})}
-          />
+          <ArmButton label='Disarm' targetState='disarmed' currentState={state} onClick={() => alarm?.service.alarmDisarm({})} />
+          <ArmButton label='Home' targetState='armed_home' currentState={state} onClick={() => alarm?.service.alarmArmHome({})} />
+          <ArmButton label='Away' targetState='armed_away' currentState={state} onClick={() => alarm?.service.alarmArmAway({})} />
         </div>
 
         <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>

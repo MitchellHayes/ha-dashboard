@@ -23,7 +23,7 @@ npm run lint          # ESLint
 
 **Layout (`src/Dashboard.tsx`):** A single full-viewport grid with two rows:
 - `NowStrip` — clock, weather, presence/next-event strip (three-column, auto height)
-- `pulse-main` — three columns: left (ForecastCard / TabbedListCard / ActivityCard), center (HouseOverview 3×2 room grid), right (ClimateCard / AlarmCard / MediaCard)
+- `pulse-main` — three columns: left (TabbedListCard / ActivityCard), center (HouseOverview 3×2 room grid), right (ClimateCard / AlarmCard / MediaCard)
 
 `AlarmCard` manages its own `panelOpen` state; tapping the state indicator renders `AlarmPanel` as an absolute-positioned overlay for door/window sensor details.
 
@@ -51,7 +51,7 @@ entity.service.toggle();   // no-arg calls are fine without wrapper
 entity.service.volumeSet({ volume_level: 0.5 });
 ```
 
-**`todo` and `calendar` domains are not in HAKit's typed domain set.** Use the `AnyCall` cast from `useTodoItems.ts`:
+**`todo` and `calendar` domains are not in HAKit's typed domain set.** Use this `AnyCall` cast pattern:
 ```ts
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyCall = (args: Record<string, unknown>) => Promise<any>;
@@ -74,12 +74,12 @@ useEffect(() => { void fetch(); }, [entityState, fetch]);
 ## Design System
 
 All tokens live in `src/index.css` as CSS custom properties. Key ones:
-- Colors: `--bg`, `--bg-deep`, `--card`, `--card-2`, `--border`, `--text`, `--text-2`, `--text-3`, `--accent` (#ffbf47 amber), `--accent-2`, `--ok` (green), `--alert` (red), `--cool` (blue), `--warm`
+- Colors: `--bg`, `--bg-deep`, `--card`, `--card-2`, `--border`, `--text`, `--text-2`, `--text-3`, `--accent` (#ffbf47 amber), `--accent-2`, `--ok` (green), `--alert` (red), `--cool` (blue)
 - Typography: `--font` (Geist), `--mono` (Geist Mono)
-- Shape: `--radius` (20px), `--radius-md`, `--radius-sm`
+- Shape: `--radius` (20px), `--radius-md`
 - Display font sizes: `--sz-clock`, `--sz-weather-temp`, `--sz-room-temp`
 
-Utility classes: `.card`, `.room`, `.ibtn`, `.ibtn.sm`, `.ibtn.primary`, `.switch`, `.switch.on`, `.dot`, `.dot.live`, `.pill`, `.pill.on`, `.slider`, `.mono`, `.label`, `.card-title`, `.card-action`, `.card-h`, `.col`, `.col-flex`, `.grow`, `.between`, `.divider`
+Utility classes: `.card`, `.room`, `.ibtn`, `.ibtn.sm`, `.ibtn.primary`, `.switch`, `.switch.on`, `.dot`, `.dot.live`, `.slider`, `.mono`, `.label`, `.card-title`, `.card-action`, `.card-h`, `.col`, `.col-flex`, `.grow`, `.between`, `.divider`
 
 Icon library is **Lucide React** (stroke-based). Use `strokeWidth={1.5}` for regular icons, `1.2–1.4` for decorative/large ones.
 

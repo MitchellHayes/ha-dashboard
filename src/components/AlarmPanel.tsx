@@ -22,13 +22,12 @@ function stateLabel(s: string): string {
 
 interface ArmButtonProps {
   label: string;
-  sub: string;
   targetState: AlarmState;
   currentState: string;
   onClick: () => void;
 }
 
-function ArmButton({ label, sub, targetState, currentState, onClick }: ArmButtonProps) {
+function ArmButton({ label, targetState, currentState, onClick }: ArmButtonProps) {
   const isCurrent = currentState === targetState;
   const tone = targetState === 'armed_away' ? 'var(--alert)' : targetState === 'armed_home' ? 'var(--accent)' : 'var(--ok)';
   return (
@@ -51,7 +50,6 @@ function ArmButton({ label, sub, targetState, currentState, onClick }: ArmButton
     >
       {targetState === 'disarmed' ? <Unlock size={28} strokeWidth={1.5} /> : <Shield size={28} strokeWidth={1.5} />}
       <span style={{ fontSize: 16, fontWeight: 600 }}>{label}</span>
-      <span style={{ fontSize: 12, opacity: 0.7 }}>{sub}</span>
     </button>
   );
 }
@@ -152,27 +150,9 @@ export function AlarmPanel({ open, onClose }: AlarmPanelProps) {
 
         {/* Arm buttons */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-          <ArmButton
-            label='Disarm'
-            sub='turn off'
-            targetState='disarmed'
-            currentState={state}
-            onClick={() => alarm?.service.alarmDisarm({})}
-          />
-          <ArmButton
-            label='Stay'
-            sub='perimeter only'
-            targetState='armed_home'
-            currentState={state}
-            onClick={() => alarm?.service.alarmArmHome({})}
-          />
-          <ArmButton
-            label='Away'
-            sub='full arm'
-            targetState='armed_away'
-            currentState={state}
-            onClick={() => alarm?.service.alarmArmAway({})}
-          />
+          <ArmButton label='Disarm' targetState='disarmed' currentState={state} onClick={() => alarm?.service.alarmDisarm({})} />
+          <ArmButton label='Home' targetState='armed_home' currentState={state} onClick={() => alarm?.service.alarmArmHome({})} />
+          <ArmButton label='Away' targetState='armed_away' currentState={state} onClick={() => alarm?.service.alarmArmAway({})} />
         </div>
 
         {/* Sensors */}

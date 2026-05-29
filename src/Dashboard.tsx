@@ -1,6 +1,5 @@
 import { useHass } from '@hakit/core';
 import { NowStrip } from './components/NowStrip';
-import { ForecastCard } from './components/ForecastCard';
 import { TabbedListCard } from './components/TabbedListCard';
 import { ActivityCard } from './components/ActivityCard';
 import { HouseOverview } from './components/HouseOverview';
@@ -20,7 +19,6 @@ function Dashboard() {
 
           <div className='pulse-main'>
             <div className='col'>
-              <ForecastCard />
               <TabbedListCard />
               <ActivityCard />
             </div>

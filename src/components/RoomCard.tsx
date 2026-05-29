@@ -31,6 +31,9 @@ function pointsToPath(pts: number[], w: number, h: number): string {
 export function RoomCard({ room }: { room: RoomConfig }) {
   const tempEnt = useEntity(room.tempEntity as `sensor.${string}`);
   const lightEnt = useEntity(room.lightEntity as `light.${string}`);
+  const humidityEnt = useEntity((room.humidityEntity ?? 'sensor.thermostat_humidity') as `sensor.${string}`, {
+    returnNullIfNotFound: true,
+  });
   const motionEnt = useEntity((room.motionEntity ?? 'binary_sensor.kitchen_motion') as `binary_sensor.${string}`, {
     returnNullIfNotFound: true,
   });
@@ -94,7 +97,7 @@ export function RoomCard({ room }: { room: RoomConfig }) {
           {room.humidityEntity && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <Droplets size={11} />
-              {/* humidity rendered by parent if wired */}
+              {humidityEnt?.state ? `${Math.round(parseFloat(humidityEnt.state))}%` : '—'}
             </span>
           )}
           {room.doorEntity && (

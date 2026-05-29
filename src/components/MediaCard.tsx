@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useEntity } from '@hakit/core';
+import { useHassPhoto } from '../hooks/useHassPhoto';
 import { SkipBack, Play, Pause, SkipForward, Volume2, Music, Speaker } from 'lucide-react';
 
 type Device = {
@@ -172,6 +173,7 @@ export function MediaCard() {
   const position = (attrs as { media_position?: number }).media_position ?? 0;
   const progress = duration > 0 ? Math.min(100, Math.round((position / duration) * 100)) : 0;
   const entityPicture = (attrs as { entity_picture?: string }).entity_picture;
+  const albumArt = useHassPhoto(entityPicture);
 
   function setVolume(e: React.ChangeEvent<HTMLInputElement>) {
     player?.service.volumeSet({ serviceData: { volume_level: Number(e.target.value) / 100 } });
@@ -189,7 +191,7 @@ export function MediaCard() {
   }
 
   return (
-    <div className='card'>
+    <div className='card' style={{ flexGrow: 1 }}>
       <div className='card-h'>
         <span className='card-title'>Now playing</span>
         <div style={{ display: 'inline-flex', gap: 6 }}>
@@ -199,7 +201,7 @@ export function MediaCard() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 14 }}>
+      <div style={{ display: 'flex', gap: 14, flexGrow: 1, alignItems: 'center', minHeight: 0 }}>
         {/* Album art */}
         <div
           style={{
@@ -207,10 +209,11 @@ export function MediaCard() {
             height: 72,
             borderRadius: 12,
             flexShrink: 0,
-            background: entityPicture ? undefined : 'linear-gradient(135deg, #5a3a1c 0%, #2d1d10 50%, #1a1100 100%)',
-            backgroundImage: entityPicture ? `url(${entityPicture})` : undefined,
+            backgroundColor: albumArt ? undefined : 'transparent',
+            backgroundImage: albumArt ? `url(${albumArt})` : 'linear-gradient(135deg, #5a3a1c 0%, #2d1d10 50%, #1a1100 100%)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -218,7 +221,7 @@ export function MediaCard() {
             overflow: 'hidden',
           }}
         >
-          {!entityPicture && <Music size={28} strokeWidth={1.2} />}
+          {!albumArt && <Music size={28} strokeWidth={1.2} />}
         </div>
 
         <div className='col-flex grow' style={{ justifyContent: 'center', minWidth: 0 }}>
